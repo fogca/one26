@@ -1,5 +1,5 @@
 <script>
-    import GridToPreview from '$lib/components/GridToPreview.svelte';
+  
   
     // あなたの画像パスに置き換えてください
     const products = [
@@ -54,7 +54,7 @@
     ];
   </script>
   
-  <GridToPreview {products} />
+  
   
   <style>
     :global(body) {

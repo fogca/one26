@@ -2,19 +2,21 @@
 	import ShuffleText from '$lib/components/ShuffleText.svelte';
 	import type { PageData } from './$types';
   
-	export let data: PageData;
+	let { data }: { data: PageData } = $props();
   
-	$: ({ work, relatedWorks, navigation } = data);
-  </script>
+	let work = $derived(data.work);
+	let relatedWorks = $derived(data.relatedWorks);
+	let navigation = $derived(data.navigation);
+</script>
   
-  <svelte:head>
+<svelte:head>
 	<title>{work.title} - Kazuki Kaneko / one inc.</title>
 	{#if work.description}
 	  <meta name="description" content={work.description} />
 	{/if}
-  </svelte:head>
+</svelte:head>
   
-  <div class="work-detail-page">
+<div class="work-detail-page">
 	<!-- Fixed Header -->
 
   
@@ -93,9 +95,9 @@
 	  </nav>
 
 
-  </div>
+</div>
   
-  <style>
+<style>
 	.work-detail-page {
 	  background: #ffffff;
 	  min-height: 100vh;
@@ -268,4 +270,4 @@
 	  width: 0px;
 	  background: transparent;
 	}
-  </style>
+</style>
