@@ -4,9 +4,9 @@
 <header>
 
 	<nav class="nav">
-		<a href="/works" class="h5 bold" lang="en">Works</a>
-		<a href="/office" class="h5 bold" lang="en">Office</a>
-		<a href="/office" class="h5 bold" lang="en">Recruitment</a>
+		<a href="/works" class="h5 bold" lang="en">Archives</a>
+		<a href="/office" class="h5 bold" lang="en">About</a>
+		<a href="/office" class="h5 bold" lang="en">Contact</a>
 	</nav>
 
 	<div class="home">
