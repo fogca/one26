@@ -26,6 +26,7 @@
 
   let currentGridSize = $state('100%');
   let animated = $state(false);
+  let isLoading = $state(true); // 読み込み状態
 
   // 列数を取得
   function getColumnCount(): number {
@@ -139,7 +140,11 @@
       loadedCount++;
       if (loadedCount === imageElements.length) {
         layoutMasonry();
-        document.body.classList.remove('loading');
+        
+        // レイアウト完了後、少し待ってからフェードイン
+        setTimeout(() => {
+          isLoading = false;
+        }, 100);
       }
     };
     
@@ -203,6 +208,7 @@
 
   <section 
     class="grid_gallery_container" 
+    class:loading={isLoading}
     id="grid-gallery"
   >
     {#each images as image}
@@ -286,6 +292,12 @@
     margin-left: auto;
     margin-right: 0;
     max-width: 1400px;
+    opacity: 1;
+    transition: opacity 0.6s ease-out;
+  }
+
+  .grid_gallery_container.loading {
+    opacity: 0;
   }
 
   /* Masonry Items - Absolute Positioning */
