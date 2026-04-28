@@ -1,13 +1,24 @@
 import { Resend } from 'resend';
-import { RESEND_API_KEY, CONTACT_TO_EMAIL, CONTACT_FROM_EMAIL } from '$env/static/private';
+import { env } from '$env/dynamic/private';
 import type { RequestHandler } from './$types';
 
 const MAX_TOTAL_BYTES = 10 * 1024 * 1024; // 10 MB
 const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'application/pdf'];
 
-const resend = new Resend(RESEND_API_KEY);
-
 export const POST: RequestHandler = async ({ request }) => {
+	const resendApiKey = env.RESEND_API_KEY;
+	const contactToEmail = 'one@takumiisobe.com';
+	const contactFromEmail = 'onboarding@resend.dev';
+
+	if (!resendApiKey) {
+		console.error('[contact] missing required env vars');
+		return new Response(
+			JSON.stringify({ error: 'メール設定が未完了です' }),
+			{ status: 500, headers: { 'Content-Type': 'application/json' } }
+		);
+	}
+
+	const resend = new Resend(resendApiKey);
 	const fd = await request.formData();
 
 	const name = String(fd.get('name') ?? '').trim();
@@ -47,7 +58,7 @@ export const POST: RequestHandler = async ({ request }) => {
 	const attachments = await Promise.all(
 		rawFiles.map(async (f) => ({
 			filename: f.name,
-			content: Buffer.from(await f.arrayBuffer())
+			content: new Uint8Array(await f.arrayBuffer())
 		}))
 	);
 
@@ -90,17 +101,17 @@ export const POST: RequestHandler = async ({ request }) => {
 		// Send both in parallel — auto-reply failure should not block team notification
 		const [teamResult, replyResult] = await Promise.allSettled([
 			resend.emails.send({
-				from: CONTACT_FROM_EMAIL, // 認証済みドメインのアドレス（例: noreply@one.inc）
-				to: CONTACT_TO_EMAIL,     // 受信先（例: hello@one.inc）
+				from: contactFromEmail, // 認証済みドメインのアドレス（例: noreply@one.inc）
+				to: contactToEmail,     // 受信先（例: hello@one.inc）
 				replyTo: email,
 				subject: `[Contact] ${inquiryType} — ${name}`,
 				text: teamMail,
 				attachments
 			}),
 			resend.emails.send({
-				from: CONTACT_FROM_EMAIL,
+				from: contactFromEmail,
 				to: email,                // 問い合わせた本人
-				replyTo: CONTACT_TO_EMAIL, // 返信は team 宛に
+				replyTo: contactToEmail, // 返信は team 宛に
 				subject: 'お問い合わせを受け付けました — one inc.',
 				text: autoReply
 				// 添付は付けない（送信者のメール容量を圧迫しない）
