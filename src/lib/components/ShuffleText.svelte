@@ -469,12 +469,17 @@
     }
 
     .text-content {
-      font-size: 36px;
+      font-size: 28.5px;
       line-height: 1.1;
       width: 100%;
       /* Drop the desktop's max-content track so the grid doesn't force the
          box to the longest line's width on narrow viewports. */
       grid-template-columns: none;
+    }
+
+    /* Looser leading on the active span for the multi-line mobile hero copy. */
+    .text-content .active {
+      line-height: 1.25;
     }
   }
 

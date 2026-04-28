@@ -9,6 +9,7 @@
 	import Header from '$lib/components/Header.svelte';
 	import Footer from '$lib/components/Footer.svelte';
 	import ShuffleText from '$lib/components/ShuffleText.svelte';
+	import { reloadFontPlus } from '$lib/js/fontplus';
 
 	gsap.registerPlugin(CustomEase);
 	if (!CustomEase.get('panelSilk')) CustomEase.create('panelSilk', 'M0,0 C0.76,0 0.24,1 1,1');
@@ -34,7 +35,31 @@
 
 	let shuffleTextComponent: ShuffleText;
 	let needsEntryAnim = false;
-	let lastDirection: 'left' | 'right' = 'right';
+	let lastDirection: 'left' | 'right' | 'up' = 'right';
+
+	// Panel offstage position for a given direction. Used both as the
+	// pre-navigation start state and as the post-navigation reset state.
+	function panelOffstage(dir: 'left' | 'right' | 'up'): { x: string; y: string } {
+		if (dir === 'up') return { x: '0%', y: '100%' };
+		return { x: dir === 'right' ? '100%' : '-100%', y: '0%' };
+	}
+
+	// Panel exit (continuing the wipe past the viewport, opposite side).
+	function panelExit(dir: 'left' | 'right' | 'up'): { x: string; y: string } {
+		if (dir === 'up') return { x: '0%', y: '-100%' };
+		return { x: dir === 'right' ? '-100%' : '100%', y: '0%' };
+	}
+
+	// True when the destination is a /works/[slug] detail page (not /works
+	// itself nor /works/list). Slug nav uses an UP-direction panel.
+	function isToSlug(pathname: string | undefined | null): boolean {
+		if (!pathname) return false;
+		return (
+			pathname.startsWith('/works/') &&
+			pathname !== '/works' &&
+			pathname !== '/works/list'
+		);
+	}
 
 	// ── Outgoing animation: shrink + darken + panel slide-in (direction-aware) ──
 	onNavigate((navigation) => {
@@ -48,11 +73,18 @@
 
 		needsEntryAnim = true;
 
-		// Determine motion direction based on nav order
+		// Determine motion direction.
+		//   • Going INTO a slug page (/works/[slug]) → always UP, regardless
+		//     of where the user came from.
+		//   • Otherwise → left/right based on NAV_ORDER position.
+		const toPath = navigation.to?.url.pathname ?? '';
 		const fromIdx = NAV_ORDER.indexOf(navigation.from.url.pathname);
-		const toIdx = NAV_ORDER.indexOf(navigation.to?.url.pathname ?? '');
-		const direction: 'left' | 'right' =
-			fromIdx >= 0 && toIdx >= 0 && toIdx < fromIdx ? 'left' : 'right';
+		const toIdx = NAV_ORDER.indexOf(toPath);
+		const direction: 'left' | 'right' | 'up' = isToSlug(toPath)
+			? 'up'
+			: fromIdx >= 0 && toIdx >= 0 && toIdx < fromIdx
+				? 'left'
+				: 'right';
 		lastDirection = direction;
 
 		// Lock the shrink to the visible-viewport rectangle (not the full page).
@@ -75,14 +107,10 @@
 		}
 
 		// Pre-position the panel offstage based on direction.
-		// NAV_ORDER is left→right: ['/', '/works', '/office', '/contact'].
-		// 'right' direction (forward — moving toward a page on the right):
-		//     panel slides IN from the RIGHT (the side the next page is on).
-		// 'left'  direction (back — moving toward a page on the left):
-		//     panel slides IN from the LEFT.
-		gsap.set('.transition-panel', {
-			x: direction === 'right' ? '100%' : '-100%'
-		});
+		//   • 'right'  → panel offstage to the RIGHT  (slides in left-ward)
+		//   • 'left'   → panel offstage to the LEFT   (slides in right-ward)
+		//   • 'up'     → panel offstage BELOW         (slides in upward, slug nav)
+		gsap.set('.transition-panel', panelOffstage(direction));
 
 		return new Promise<void>((resolve) => {
 			const tl = gsap.timeline({
@@ -128,6 +156,7 @@
 				'.transition-panel',
 				{
 					x: '0%',
+					y: '0%',
 					duration: PANEL_DURATION,
 					ease: 'panelSilk'
 				},
@@ -145,8 +174,8 @@
 		const newConfig = getPageText(pathname);
 		const showShuffle = showGlobalShuffle(pathname);
 		// Panel exits to the OPPOSITE side of where it entered, so the wipe
-		// continues its motion (right-incoming → exits left, vice versa).
-		const panelExitX = lastDirection === 'right' ? '-100%' : '100%';
+		// continues its motion. Up-direction (slug nav) exits upward.
+		const exit = panelExit(lastDirection);
 
 		// Page-wrapper stays visible. Header & content are individually hidden
 		// so the ShuffleText reveal can play first; they fade in afterwards.
@@ -159,47 +188,53 @@
 		gsap.set('header', { opacity: 0 });
 		gsap.set('.page-content', { opacity: 0 });
 
-		// Kick off the shuffle BEFORE the panel slides off so it's already
-		// animating by the time the panel reveals it.
-		if (showShuffle && shuffleTextComponent && newConfig.text) {
-			shuffleTextComponent.shuffleToText(newConfig.text);
-		}
-
-		const tl = gsap.timeline({
-			onComplete: () => {
-				gsap.set('.page-wrapper', { clearProps: 'all' });
-				gsap.set('header', { clearProps: 'all' });
-				gsap.set('.page-content', { clearProps: 'all' });
-				// Reset panel offstage to its entrance side, ready for the next nav
-				gsap.set('.transition-panel', {
-					x: lastDirection === 'right' ? '100%' : '-100%'
-				});
+		// Hold the reveal until FontPlus has applied the subset for this page —
+		// otherwise the user sees the new copy in the fallback font and watches
+		// it swap. The panel covers the screen during this wait so the delay is
+		// invisible. Helper has its own ~1.8 s safety cap.
+		reloadFontPlus().then(() => {
+			// Kick off the shuffle BEFORE the panel slides off so it's already
+			// animating by the time the panel reveals it.
+			if (showShuffle && shuffleTextComponent && newConfig.text) {
+				shuffleTextComponent.shuffleToText(newConfig.text);
 			}
+
+			const tl = gsap.timeline({
+				onComplete: () => {
+					gsap.set('.page-wrapper', { clearProps: 'all' });
+					gsap.set('header', { clearProps: 'all' });
+					gsap.set('.page-content', { clearProps: 'all' });
+					// Reset panel offstage to its entrance side, ready for the next nav
+					gsap.set('.transition-panel', panelOffstage(lastDirection));
+				}
+			});
+
+			// 1) Brief hold, then panel slides OUT (continuing the wipe motion).
+			// `exit` carries both x and y so up-direction (slug) exits upward.
+			tl.to(
+				'.transition-panel',
+				{
+					x: exit.x,
+					y: exit.y,
+					duration: PANEL_DURATION,
+					ease: 'panelSilk'
+				},
+				0.15
+			);
+
+			// 2) Header & content fade in AFTER the panel is mostly out
+			//    (shuffle has been running since before the panel started moving)
+			tl.to(
+				['header', '.page-content'],
+				{
+					opacity: 1,
+					duration: FADE_IN_DURATION,
+					ease: 'contentFade',
+					stagger: 0.08
+				},
+				'+=0.3'
+			);
 		});
-
-		// 1) Brief hold, then panel slides OUT (continuing the wipe motion)
-		tl.to(
-			'.transition-panel',
-			{
-				x: panelExitX,
-				duration: PANEL_DURATION,
-				ease: 'panelSilk'
-			},
-			0.15
-		);
-
-		// 2) Header & content fade in AFTER the panel is mostly out
-		//    (shuffle has been running since before the panel started moving)
-		tl.to(
-			['header', '.page-content'],
-			{
-				opacity: 1,
-				duration: FADE_IN_DURATION,
-				ease: 'contentFade',
-				stagger: 0.08
-			},
-			'+=0.3'
-		);
 	});
 
 	// works/[slug] uses its own in-page ShuffleText; hide global one there
@@ -269,7 +304,7 @@
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
-	<link rel="stylesheet" href="../css/base.css?var=1.00" />
+	<link rel="stylesheet" href="../css/base.css?var=1.02" />
 	<link rel="stylesheet" href="../css/rendering.css?var=1.00" />
 	<link rel="stylesheet" href="https://use.typekit.net/iqk5bse.css" />
 </svelte:head>

@@ -33,7 +33,7 @@
 		// at 0 ms so heroText is settled by then).
 		if (window.innerWidth <= 767) {
 			heroText =
-				"We bring an inventive perspective<br>to every project<br>with our ideas and passion.";
+				"We bring an inventive<br>perspective to every project<br>with our ideas and passion.";
 		}
 
 		const timeoutIds: ReturnType<typeof setTimeout>[] = [];

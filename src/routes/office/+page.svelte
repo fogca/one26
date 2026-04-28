@@ -149,6 +149,18 @@
 		margin-left: 0;
 		margin-right: 0;
 	}
+
+	/* Override .my-80 utility on mobile — tighter spacing + softer line */
+	.Office hr.my-80 {
+		margin-top: 50px;
+		margin-bottom: 50px;
+		opacity: 0.3;
+	}
+
+	.Office .box ul li {
+		font-size: 14px;
+		line-height: 1.6;
+	}
 }
 
 </style>

@@ -72,7 +72,18 @@
 
 		const onOver = (e: PointerEvent) => {
 			const t = (e.target as Element | null)?.closest?.('[data-hover]') ?? null;
-			if (!t || t === currentTarget) return;
+			// Pointer is over an element with no [data-hover] ancestor — make
+			// sure we drop any sticky hover state. Required for navigations
+			// where the previous data-hover source was unmounted before
+			// pointerout could fire (e.g. clicking a gallery slide).
+			if (!t) {
+				if (currentTarget) {
+					currentTarget = null;
+					root.classList.remove('is-hover');
+				}
+				return;
+			}
+			if (t === currentTarget) return;
 			currentTarget = t;
 			const txt = t.getAttribute('data-hover') ?? '';
 			label.textContent = txt;

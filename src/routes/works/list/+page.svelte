@@ -9,11 +9,6 @@
       month: '2-digit',
       day: '2-digit'
     });
-
-  const submitSort = (event: Event) => {
-    const target = event.currentTarget as HTMLSelectElement | null;
-    target?.form?.submit();
-  };
 </script>
 
 <svelte:head>
@@ -21,15 +16,37 @@
 </svelte:head>
 
 <section class="works-list">
-  <div class="sort-wrap">
-    <form method="GET" class="sort-form">
-      <label for="sort" class="sort-label" lang="en">Sort</label>
-      <select id="sort" name="sort" class="sort-select" onchange={submitSort}>
-        <option value="default" selected={data.sort === 'default'} lang="en">Default</option>
-        <option value="new" selected={data.sort === 'new'} lang="en">New to Old</option>
-      </select>
-    </form>
-  </div>
+  <nav class="options_grid_container" lang="en">
+    <!-- View row: Grid / List toggle (List active here) -->
+    <div class="opt-row">
+      <span class="opt-label">View</span>
+      <div class="opt-values">
+        <a href="/works" class="opt-item">Grid</a>
+        <a href="/works/list" class="opt-item active" aria-current="page">List</a>
+      </div>
+    </div>
+
+    <!-- Sort row: chronological direction -->
+    <div class="opt-row">
+      <span class="opt-label">Sort</span>
+      <div class="opt-values">
+        <a
+          href="/works/list?sort=default"
+          class="opt-item"
+          class:active={data.sort === 'default'}
+        >
+          Default
+        </a>
+        <a
+          href="/works/list?sort=new"
+          class="opt-item"
+          class:active={data.sort === 'new'}
+        >
+          New to
+        </a>
+      </div>
+    </div>
+  </nav>
 
   <div class="wrapper">
     {#each data.works as work}
@@ -53,35 +70,67 @@
 
 <style>
   .works-list {
+    position: relative;
     padding-top: 120px;
     padding-bottom: 60px;
   }
 
-  .sort-wrap {
+  .options_grid_container {
+    position: fixed;
+    top: auto;
+    bottom: 30px;
+    left: var(--padding);
+    z-index: 2;
     display: flex;
-    justify-content: flex-end;
-    margin-bottom: 32px;
+    flex-direction: column;
+    gap: 16px;
+    width: 240px;
+    color: var(--key);
+    font-family: var(--font-en-main);
   }
 
-  .sort-form {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .sort-label {
-    font-size: 12px;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-
-  .sort-select {
-    min-width: 150px;
-    padding: 6px 10px;
-    border: 1px solid var(--key);
-    border-radius: 2px;
+  .opt-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 24px;
+    padding-bottom: 8px;
+    border-bottom: 0.5px solid var(--key);
     font-size: 13px;
+  }
+
+  .opt-label {
+    font-weight: var(--font-weight-light);
+    letter-spacing: 0.01em;
+  }
+
+  .opt-values {
+    display: flex;
+    align-items: baseline;
+    gap: 18px;
+  }
+
+  .opt-item {
     background: transparent;
+    color: var(--key);
+    padding: 0;
+    border: none;
+    font-size: 13px;
+    font-family: var(--font-en-main);
+    font-weight: var(--font-weight-light);
+    text-decoration: none;
+    cursor: pointer;
+    opacity: 0.35;
+    transition: opacity 0.2s ease;
+  }
+
+  .opt-item.active {
+    opacity: 1;
+    font-weight: var(--font-weight-regular);
+  }
+
+  .opt-item:not(.active):hover {
+    opacity: 1;
   }
 
   .wrapper {
@@ -156,8 +205,31 @@
       padding-bottom: 40px;
     }
 
-    .sort-wrap {
-      margin-bottom: 24px;
+    /* Mobile: pin beside the global ShuffleText. Use absolute (not fixed) so
+       it scrolls with the page; top: -8vh sits the block just above the list,
+       level with the shuffle text. */
+    .options_grid_container {
+      position: absolute;
+      top: -8vh;
+      right: var(--padding);
+      bottom: auto;
+      left: auto;
+      width: 120px;
+      gap: 6px;
+    }
+
+    .opt-row {
+      font-size: 9.5px;
+      gap: 10px;
+      padding-bottom: 4px;
+    }
+
+    .opt-values {
+      gap: 15px;
+    }
+
+    .opt-item {
+      font-size: 9.5px;
     }
 
     .wrapper {

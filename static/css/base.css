@@ -21,7 +21,7 @@
   --font-en-main: "range-sans-variable","neue-haas-unica", sans-serif;
 
   --font-en-sub: "neue-haas-unica", sans-serif;
-  --font-jp-main: "range-sans-variable","neue-haas-unica",'Tazugane Gothic StdN Light', 'Hiragino Kaku Gothic ProN', 'ヒラギノ角ゴ Pro W3', sans-serif;
+  --font-jp-main: "range-sans-variable","neue-haas-unica",TazuganeGothicStdN-Light, "TazuganeGothicStdN-Light",'Tazugane Gothic StdN Light', 'Hiragino Kaku Gothic ProN', 'ヒラギノ角ゴ Pro W3', sans-serif;
   --font-weight-light: 320;
   --font-weight-regular: 420;
 
@@ -94,7 +94,7 @@ body {
   overflow-x: hidden;
   overflow-y: auto;
 }
-html {background-color: var(--key);}
+html {background-color: #ffffff;}
 
 /* Japanese: use JP main font */
 :lang(ja) body,

@@ -8,15 +8,15 @@
 	 *
 	 * Usage: drop <Color /> at the top of +layout.svelte (above Header).
 	 */
-	export const ACCENT_COLORS = ['#100088', '#BD3900'] as const;
+	export const ACCENT_COLORS = ['#100088', '#8D2A00'] as const;
 	export type AccentColor = (typeof ACCENT_COLORS)[number];
 
-	// Orange (#BD3900) is the rare accent — appears roughly 1 in 5 visits
+	// Orange (#8D2A00) is the rare accent — appears roughly 1 in 5 visits
 	// (≈ 20%). Blue (#100088) takes the remaining ≈ 80%.
 	const ORANGE_PROBABILITY = 0.2;
 
 	export function pickRandomAccent(): AccentColor {
-		return Math.random() < ORANGE_PROBABILITY ? '#BD3900' : '#100088';
+		return Math.random() < ORANGE_PROBABILITY ? '#8D2A00' : '#100088';
 	}
 
 	/** Build a data: URI favicon SVG with the inner shape painted in the given color. */

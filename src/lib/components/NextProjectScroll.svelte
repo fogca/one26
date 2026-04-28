@@ -1,40 +1,24 @@
 <!--
   NextProjectScroll.svelte
   ─────────────────────────────────────────────────────────────
-  "Next Project" hand-off block. Sits at the natural end of the page
-  (no extra scroll runway). Once the user has reached the bottom of
-  the document, additional downward wheel input is *captured* and
-  converted into a karaoke-style text fill. When the fill reaches
-  100%, navigates to the next project.
+  Bottom-of-page hand-off block. The user has scrolled to the
+  end of the document; additional wheel input is captured (and
+  the default scroll behaviour is cancelled) to grow a 100px
+  tall accent-color bar from the LEFT edge towards the RIGHT.
+  When the bar reaches 100% of the viewport width (= 100vw),
+  the next project is loaded.
 
-  Behaviour
-  - The block is `height: 100vh` so it always fills the final viewport
-    when the page is fully scrolled — visually "everything is locked
-    in place" with no whitespace below.
-  - Below the page bottom, native scroll cannot go further. We attach
-    a `wheel` listener to *capture* downward deltas at that point,
-    `preventDefault()` to block any rubber-band, and accumulate them
-    into a 0→1 fill progress.
-  - Scrolling up past the threshold drains the accumulator, so the
-    fill is reversible until the threshold is crossed.
-
-  Usage
-  ```svelte
-  {#if navigation?.next}
-    <NextProjectScroll
-      href={`/works/${navigation.next.id}`}
-      title={navigation.next.title}
-    />
-  {/if}
-  ```
+  The slug page wraps its body in `{#key data.work.id}` so the
+  whole page (including this component) is fully re-mounted on
+  navigation — that's how all content (images, body, etc.) is
+  guaranteed to refresh.
 
   Props
   - href             — destination URL (required)
-  - title            — name of the next project, rendered as karaoke fill
-  - label            — small caption above the title (default "Next Project")
+  - label            — caption rendered at bottom-right (default "NEXT PROJECT")
   - hoverLabel       — text for the CustomCursor pill (default "Next Project")
   - completeDistance — px of additional wheel input needed to reach 100%
-                       (default 800 — higher = harder to fully fill)
+                       (default 800)
 -->
 
 <script lang="ts">
@@ -44,7 +28,6 @@
 
 	type Props = {
 		href: string;
-		title?: string;
 		label?: string;
 		hoverLabel?: string;
 		completeDistance?: number;
@@ -52,10 +35,9 @@
 
 	let {
 		href,
-		title = '',
 		label = 'Next Project',
 		hoverLabel = 'Next Project',
-		completeDistance = 800
+		completeDistance = 2000
 	}: Props = $props();
 
 	let progress = $state(0);
@@ -69,11 +51,9 @@
 		const onWheel = (e: WheelEvent) => {
 			if (triggered) return;
 
-			const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-			const atBottom = window.scrollY >= docHeight - 1;
-
-			if (!atBottom) {
-				// Not at the page bottom yet — let native scroll run.
+			// Wheel up: NEVER preventDefault — the user must always be able to
+			// scroll back up the page. Drop the accumulator so the bar resets.
+			if (e.deltaY < 0) {
 				if (scrollAccum > 0) {
 					scrollAccum = 0;
 					progress = 0;
@@ -81,10 +61,21 @@
 				return;
 			}
 
-			// At bottom — capture additional wheel as fill progress.
-			// (Up-deltas drain the accumulator so fill is reversible.)
+			const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+			const atBottom = window.scrollY >= docHeight - 1;
+
+			// Wheel down but not at bottom yet — let native scroll run.
+			if (!atBottom) {
+				if (scrollAccum > 0) {
+					scrollAccum = 0;
+					progress = 0;
+				}
+				return;
+			}
+
+			// Wheel down at the page bottom — capture as fill progress.
 			e.preventDefault();
-			scrollAccum = Math.max(0, Math.min(completeDistance, scrollAccum + e.deltaY));
+			scrollAccum = Math.min(completeDistance, scrollAccum + e.deltaY);
 			progress = (scrollAccum / completeDistance) * 100;
 
 			if (progress >= 100 && !triggered) {
@@ -101,65 +92,47 @@
 	});
 </script>
 
-<section
-	class="next-project"
-	style:--fill-progress="{progress}%"
-	data-next-project
->
-	<a {href} class="link" data-hover={hoverLabel}>
-		<span class="label">{label}</span>
-		<span class="title">{title}</span>
-	</a>
+<section class="np-wrapper" style:--fill-progress="{progress}%" data-next-project>
+	<!-- 100px-tall accent-color bar that grows L→R as the user scrolls
+	     past the page bottom. Reaches 100vw at the same moment fill = 100%
+	     (when goto fires). -->
+	<div class="np-bar" aria-hidden="true"></div>
+
+	<!-- "NEXT PROJECT" caption pinned to the bottom-right -->
+	<a {href} class="link" data-hover={hoverLabel}>{label}</a>
 </section>
 
 <style>
-	.next-project {
+	.np-wrapper {
 		--fill-progress: 0%;
-		width: 100%;
-		/* Full viewport height so when the user reaches the page bottom,
-		   the entire block sits locked in place (no whitespace below). */
-		height: 100vh;
-		display: flex;
-		align-items: flex-end;
-		padding: 60px var(--padding, 25px);
-		box-sizing: border-box;
+		position: relative;
+		width: 100vw;
+		height: 100px;
+		background: #ffffff;
+		z-index: 1;
+		overflow: hidden;
+	}
+
+	.np-bar {
+		position: absolute;
+		top: auto;
+		bottom: 0;
+		left: 0;
+		height: 10px;
+		width: var(--fill-progress, 0%);
+		background: var(--key, #100088);
+		will-change: width;
 	}
 
 	.link {
-		display: flex;
-		flex-direction: column;
-		align-items: flex-start;
-		gap: 16px;
+		position: absolute;
+		right: var(--padding, 25px);
+		bottom: var(--padding, 25px);
 		text-decoration: none;
-		text-align: left;
-		width: 100%;
-	}
-
-	.label {
-		font-size: var(--fs-h6, 12px);
-		text-transform: uppercase;
-		letter-spacing: 0.04em;
-		opacity: 0.6;
-	}
-
-	.title {
-		font-size: clamp(40px, 8vw, 120px);
+		font-size: clamp(20px, 3vw, 36px);
 		font-weight: 320;
+		color: var(--key, #100088);
+		letter-spacing: 0.01em;
 		line-height: 1;
-		max-width: 100%;
-		word-break: break-word;
-		/* karaoke fill — outline drawn by text-stroke, filled portion by
-		   a linear-gradient clipped to the text. */
-		-webkit-text-stroke: 1px currentColor;
-		-webkit-text-fill-color: transparent;
-		background-image: linear-gradient(
-			to right,
-			currentColor 0%,
-			currentColor var(--fill-progress, 0%),
-			transparent var(--fill-progress, 0%),
-			transparent 100%
-		);
-		-webkit-background-clip: text;
-		background-clip: text;
 	}
 </style>

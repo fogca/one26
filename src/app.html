@@ -3,6 +3,43 @@
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+		<!-- FOUT guard for the very first paint: keep the body invisible until
+		     FontPlus signals the subset has rendered. Capped at 1500 ms so a
+		     blocked/slow font request can never lock the page. -->
+		<style>
+			html:not(.fonts-ready) body { opacity: 0; }
+			body { transition: opacity 0.25s ease; }
+		</style>
+		<script>
+			(function () {
+				var done = false;
+				function ready() {
+					if (done) return;
+					done = true;
+					document.documentElement.classList.add('fonts-ready');
+				}
+				// Safety: reveal after 1500 ms regardless.
+				setTimeout(ready, 1500);
+
+				// Poll for FONTPLUS until the script lands, then attach completion.
+				function tryAttach() {
+					if (window.FONTPLUS && typeof window.FONTPLUS.attachCompleteEvent === 'function') {
+						try { window.FONTPLUS.attachCompleteEvent(ready); } catch (e) { /* ignore */ }
+						return true;
+					}
+					return false;
+				}
+				if (!tryAttach()) {
+					var poll = setInterval(function () {
+						if (tryAttach()) clearInterval(poll);
+					}, 30);
+					setTimeout(function () { clearInterval(poll); }, 1500);
+				}
+			})();
+		</script>
+		<script src="https://webfont.fontplus.jp/accessor/script/fontplus.js?kqbwQX--jVA%3D&box=Bgw26CBfLFk%3D&aa=1&ab=2"></script>
+
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">
