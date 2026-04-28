@@ -8,6 +8,9 @@
 
   let textElement: HTMLElement;
   let shuffleInterval: ReturnType<typeof setInterval>;
+  // Canonical target text — single source of truth, decoupled from textElement.innerHTML
+  // (which may be in a transient half-shuffled state when hover/reshuffle fires).
+  let currentTargetText = text;
 
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ !./';
 
@@ -15,14 +18,40 @@
     return chars[Math.floor(Math.random() * chars.length)];
   }
 
+  // Re-run the shuffle to the LAST KNOWN final text. Never reads innerHTML so
+  // hovering mid-shuffle won't lock the animation onto a partial state.
+  export function reshuffleCurrentText() {
+    if (!currentTargetText || currentTargetText.trim().length === 0) return;
+    shuffleToText(currentTargetText);
+  }
+
+  // Wipe the active span (so the previous page's settled text doesn't linger)
+  // and update the canonical target text. Width/height of the box stays
+  // reserved by the (hidden) ghost which renders {forText}. The user prefers
+  // an empty start over a random-character preview before the shuffle reveal.
+  export function setRandom(forText?: string) {
+    if (shuffleInterval) clearInterval(shuffleInterval);
+    if (forText !== undefined) currentTargetText = forText;
+    if (textElement) textElement.innerHTML = '';
+  }
+
   export function shuffleToText(finalText: string, callback?: () => void) {
     if (shuffleInterval) {
       clearInterval(shuffleInterval);
     }
 
+    // Update the canonical target so reshuffleCurrentText() always knows the truth
+    currentTargetText = finalText;
+
     const lines = finalText.split('<br>');
     const allWords = lines.map(line => line.split(' '));
     const revealedCounts = allWords.map(words => words.map(() => 0));
+
+    // Start from empty (no random-character preview). User preference:
+    // "0から何もないところからshuffleした方がマシ".
+    // The shuffle interval below progressively reveals one char at a time per
+    // word; positions ahead of the revealed cursor stay empty.
+    if (textElement) textElement.innerHTML = '';
 
     shuffleInterval = setInterval(() => {
       let allComplete = true;
@@ -34,25 +63,25 @@
           if (revealedCount < word.length) {
             allComplete = false;
             revealedCounts[lineIndex][wordIndex]++;
-
-            let result = '';
-            for (let i = 0; i < word.length; i++) {
-              if (i < revealedCounts[lineIndex][wordIndex]) {
-                result += word[i];
-              } else {
-                if (word[i] === '!' || word[i] === '.' || word[i] === '/') {
-                  result += word[i];
-                } else if (word[i] === ' ') {
-                  result += ' ';
-                } else {
-                  result += randomChar();
-                }
-              }
-            }
-            return result;
           }
 
-          return word;
+          // Growing-typewriter shuffle: render only [revealed chars] + a single
+          // random "shuffle cursor" at the next position. Positions beyond that
+          // stay empty (no full-width random characters across the whole word).
+          const settled = revealedCounts[lineIndex][wordIndex];
+          let result = '';
+          for (let i = 0; i < word.length; i++) {
+            if (i < settled) {
+              result += word[i];
+            } else if (i === settled) {
+              const c = word[i];
+              if (c === ' ') result += ' ';
+              else if (c === '!' || c === '.' || c === '/') result += c;
+              else result += randomChar();
+            }
+            // i > settled: leave empty
+          }
+          return result;
         });
 
         return shuffledWords.join(' ');
@@ -81,6 +110,9 @@
     if (shuffleInterval) {
       clearInterval(shuffleInterval);
     }
+
+    // Empty target — reshuffle should not bring back stale text
+    currentTargetText = '';
 
     const currentText = textElement.innerHTML.replace(/<br>/g, ' ');
     const words = currentText.split(' ').filter(w => w.length > 0);
@@ -129,7 +161,10 @@
     if (shuffleInterval) {
       clearInterval(shuffleInterval);
     }
-    
+
+    // Lock the new target before the transition starts
+    currentTargetText = toText;
+
     if (!textElement) {
       if (callback) callback();
       return;
@@ -353,8 +388,26 @@
 </script>
 
 
-<div class="shuffle-text" class:inline>
-  <div class="text-content heading h1" lang="en" style="font-family: var(--heading-font);" bind:this={textElement}></div>
+<div
+  class="shuffle-text"
+  class:inline
+  role="button"
+  tabindex="0"
+  aria-label="Reshuffle text animation"
+  onmouseenter={reshuffleCurrentText}
+  onfocus={reshuffleCurrentText}
+  onkeydown={(e) => e.key === 'Enter' && reshuffleCurrentText()}
+>
+  <!--
+    Ghost (visually hidden) renders the FINAL text, reserving exactly the
+    width/height needed. The "active" span overlays absolutely on top with
+    the in-progress shuffle output. Result: the box never shifts even though
+    proportional-width letters fluctuate during the shuffle.
+  -->
+  <div class="text-content heading h1" lang="en" style="font-family: var(--heading-font);">
+    <span class="ghost" aria-hidden="true">{@html currentTargetText}</span>
+    <span class="active" bind:this={textElement}></span>
+  </div>
 </div>
 
 <style>
@@ -367,7 +420,7 @@
     transform-origin: bottom;
     left: var(--padding);
     z-index: 99;
-    pointer-events: none;
+    pointer-events: auto;
   }
 
   .shuffle-text.inline {
@@ -378,10 +431,51 @@
     z-index: auto;
   }
 
+  /* Grid stack: ghost & active occupy the same single cell, so they share
+     line-height/baseline naturally without any flex/absolute baseline math.
+     Eliminates the "extra space" line-height looked too tall. */
   .text-content {
     height: auto;
-    display: flex;
-    align-items: flex-end;
+    display: grid;
+    grid-template-columns: max-content;
+    position: relative;
+  }
+
+  .text-content .ghost,
+  .text-content .active {
+    grid-area: 1 / 1;
+    line-height: 1.1;
+    /* ShuffleText keeps the lighter wght 320 even though the rest of the site
+       runs on 420 — the shuffle reads better at the lighter weight. */
+    font-weight: 320;
+    font-variation-settings: 'wght' 320;
+  }
+
+  .text-content .ghost {
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  @media screen and (max-width: 767px) {
+    /* On mobile the shuffle title flows with the page (no fixed pinning).
+       Lets the form / content below it scroll naturally past the title. */
+    .shuffle-text {
+      position: relative;
+      top: auto;
+      left: auto;
+      transform: none;
+      z-index: auto;
+      padding: 15vh var(--padding) 0;
+    }
+
+    .text-content {
+      font-size: 36px;
+      line-height: 1.1;
+      width: 100%;
+      /* Drop the desktop's max-content track so the grid doesn't force the
+         box to the longest line's width on narrow viewports. */
+      grid-template-columns: none;
+    }
   }
 
 

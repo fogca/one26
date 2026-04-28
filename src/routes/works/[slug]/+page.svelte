@@ -1,9 +1,10 @@
 <script lang="ts">
 	import ShuffleText from '$lib/components/ShuffleText.svelte';
+	import NextProjectScroll from '$lib/components/NextProjectScroll.svelte';
 	import type { PageData } from './$types';
-  
+
 	let { data }: { data: PageData } = $props();
-  
+
 	let work = $derived(data.work);
 	let relatedWorks = $derived(data.relatedWorks);
 	let navigation = $derived(data.navigation);
@@ -78,22 +79,14 @@
 	</div>
 
 
-	<!-- Navigation -->
-	<nav class="work-nav">
-		{#if navigation.prev}
-		  <a href="/works/{navigation.prev.id}" class="nav-link prev">
-			<span class="nav-arrow">←</span>
-			<span class="nav-title">{navigation.prev.title}</span>
-		  </a>
-		{/if}
-		{#if navigation.next}
-		  <a href="/works/{navigation.next.id}" class="nav-link next">
-			<span class="nav-arrow">→</span>
-			<span class="nav-title">{navigation.next.title}</span>
-		  </a>
-		{/if}
-	  </nav>
-
+	<!-- Karaoke-style "Next Project" hand-off — auto-navigates on full fill. -->
+	{#if navigation?.next}
+		<NextProjectScroll
+			href="/works/{navigation.next.id}"
+			title={navigation.next.title}
+			label="Next Project"
+		/>
+	{/if}
 
 </div>
   

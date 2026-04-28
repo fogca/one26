@@ -1,309 +1,288 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
-    import { gsap } from 'gsap';
-    import Grid from '$lib/components/Grid.svelte';
-    import type { PageData } from './$types';
+  import { onMount } from 'svelte';
+  import { browser } from '$app/environment';
+  import { gsap } from 'gsap';
+  import Lenis from '@studio-freight/lenis';
+  import ShuffleText from '$lib/components/ShuffleText.svelte';
+  import type { PageData } from './$types';
+
+  let { data }: { data: PageData } = $props();
+
+  let showContent = $state(false);
+  let galleryContainer: HTMLElement | undefined;
+  let works = $derived(data.works || []); // worksデータ
   
-    export let data: PageData;
-  
-    // microCMSのWork型をGrid用のProject型に変換
-    $: projects = data.works.map(work => ({
-      id: work.id,
-      title: work.title,
-      image: {
-        url: work.thumbnail?.url || ''
+  let revealStep = $state(0); // 0: hidden, 1: "We opt...", 2: "Welcome:)", 3: show gallery
+
+  onMount(() => {
+    if (!browser) return;
+
+    // Cleanup handles — populated when initHorizontalScroll runs
+    let lenisInstance: Lenis | null = null;
+    let rafId: number | null = null;
+    let wheelHandler: ((e: WheelEvent) => void) | null = null;
+    const timeoutIds: ReturnType<typeof setTimeout>[] = [];
+
+    // Opening animation with ShuffleText
+    timeoutIds.push(
+      setTimeout(() => {
+        revealStep = 1; // "We opt for a novel experience."
+      }, 300)
+    );
+
+    timeoutIds.push(
+      setTimeout(() => {
+        revealStep = 2; // "Welcome:)"
+      }, 2000)
+    );
+
+    timeoutIds.push(
+      setTimeout(() => {
+        revealStep = 3; // Show gallery
+        showContent = true;
+
+        // Lenis horizontal scroll 初期化
+        timeoutIds.push(
+          setTimeout(() => {
+            initHorizontalScroll();
+          }, 100)
+        );
+      }, 3500)
+    );
+
+    function initHorizontalScroll() {
+      if (!galleryContainer) {
+        console.log('Gallery container not found');
+        return;
       }
-    }));
-  
-    let showOpening = true;
-    let showGrid = false;
-    let mainTextElement: HTMLElement;
-  
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ !.';
-  
-    function randomChar() {
-      return chars[Math.floor(Math.random() * chars.length)];
-    }
-  
-    function shuffleText(element: HTMLElement, finalText: string, callback?: () => void) {
-      const words = finalText.split(' ');
-      const revealedCounts = words.map(() => 0);
-      let interval: ReturnType<typeof setInterval>;
-  
-      interval = setInterval(() => {
-        let allComplete = true;
-  
-        const shuffledWords = words.map((word, wordIndex) => {
-          const revealedCount = revealedCounts[wordIndex];
-  
-          if (revealedCount < word.length) {
-            allComplete = false;
-            revealedCounts[wordIndex]++;
-  
-            let result = '';
-            for (let i = 0; i < word.length; i++) {
-              if (i < revealedCounts[wordIndex]) {
-                result += word[i];
-              } else {
-                if (word[i] === '!' || word[i] === '.' || word[i] === '/') {
-                  result += word[i];
-                } else if (word[i] === ' ') {
-                  result += ' ';
-                } else {
-                  result += randomChar();
-                }
-              }
-            }
-            return result;
-          }
-  
-          return word;
-        });
-  
-        element.innerHTML = shuffledWords.join(' ');
-  
-        if (allComplete) {
-          clearInterval(interval);
-          element.innerHTML = finalText;
-          if (callback) callback();
-        }
-      }, 40);
-    }
-  
-    function shuffleTextWithBreak(element: HTMLElement, finalText: string, callback?: () => void) {
-      const lines = finalText.split('<br>');
-      const allWords = lines.map(line => line.split(' '));
-      const revealedCounts = allWords.map(words => words.map(() => 0));
-      let interval: ReturnType<typeof setInterval>;
-  
-      interval = setInterval(() => {
-        let allComplete = true;
-  
-        const shuffledLines = allWords.map((words, lineIndex) => {
-          const shuffledWords = words.map((word, wordIndex) => {
-            const revealedCount = revealedCounts[lineIndex][wordIndex];
-  
-            if (revealedCount < word.length) {
-              allComplete = false;
-              revealedCounts[lineIndex][wordIndex]++;
-  
-              let result = '';
-              for (let i = 0; i < word.length; i++) {
-                if (i < revealedCounts[lineIndex][wordIndex]) {
-                  result += word[i];
-                } else {
-                  if (word[i] === '!' || word[i] === '.' || word[i] === '/') {
-                    result += word[i];
-                  } else if (word[i] === ' ') {
-                    result += ' ';
-                  } else {
-                    result += randomChar();
-                  }
-                }
-              }
-              return result;
-            }
-  
-            return word;
-          });
-  
-          return shuffledWords.join(' ');
-        });
-  
-        element.innerHTML = shuffledLines.join('<br>');
-  
-        if (allComplete) {
-          clearInterval(interval);
-          element.innerHTML = finalText;
-          if (callback) callback();
-        }
-      }, 40);
-    }
-  
-    function startOpeningAnimation() {
-      const timeline = gsap.timeline();
-  
-      timeline
-        // 0. 初期状態：全て非表示
-        .set(mainTextElement, { innerHTML: '' })
-        .set('.project-grid-container', { opacity: 0 })
-        .set('.single-cover', { 
-          display: 'block',
-          opacity: 0,
-          scale: 0.95
-        })
-        .set('.grid-cover:not(.single-cover)', { 
-          display: 'none'
-        })
-        
-        // 1. グリッドとカバーを同時に表示開始
-        .to('.project-grid-container', {
-          opacity: 1,
-          duration: 0.01
-        })
-        .to('.single-cover', {
-          opacity: 1,
-          scale: 1,
-          duration: 0.8,
-          ease: 'power2.out'
-        }, '<')
-        
-        // 2. "WELCOME / Kazuki Kaneko / one inc." シャッフル表示（空から）
-        .call(() => {
-          if (mainTextElement) {
-            shuffleTextWithBreak(mainTextElement, 'WELCOME<br>Kazuki Kaneko / one inc.');
-          }
-        }, null, '+=0.3')
-        
-        // 3. 1.5秒後にgridに分割
-        .set('.single-cover', {
-          display: 'none',
-          delay: 1.5
-        })
-        .set('.grid-cover:not(.single-cover)', { 
-          display: 'grid'
-        })
-        .set('.cover-tile', { 
-          opacity: 1
-        })
-        
-        // 4. "WE CREATE..." にシャッフル & gridが消えて画像が見える
-        .call(() => {
-          if (mainTextElement) {
-            shuffleText(mainTextElement, 'OPT FOR A NOVEL <br>EXPERIENCE');
-          }
-        })
-        .to('.cover-tile', {
-          opacity: 0,
-          duration: 0.8,
-          stagger: {
-            amount: 0.6,
-            from: 'random'
-          },
-          ease: 'power2.inOut',
-          onComplete: () => {
-            showOpening = false;
-            showGrid = true;
-          }
-        }, '-=0.2');
-    }
-  
-    onMount(() => {
-      if (projects.length >= 8) {
-        startOpeningAnimation();
+
+      const track = galleryContainer.querySelector('.gallery-track') as HTMLElement;
+      if (!track) {
+        console.log('Gallery track not found');
+        return;
       }
-    });
-  </script>
-  
-  <svelte:head>
-    <title>Kazuki Kaneko / one inc.</title>
-  </svelte:head>
-  
-  <div class="page">
-    {#if showOpening}
-      <!-- Opening Animation - Grid Cover Only -->
-      <div class="opening-overlay">
-        <!-- 1枚の大きい平面 -->
-        <div class="grid-cover single-cover"></div>
-        
-        <!-- 分割されたgrid -->
-        <div class="grid-cover">
-          {#each Array(8) as _, i}
-            <div class="cover-tile"></div>
-          {/each}
-        </div>
+
+      lenisInstance = new Lenis({
+        wrapper: galleryContainer,
+        content: track,
+        orientation: 'horizontal',
+        gestureOrientation: 'horizontal',
+        smoothWheel: true,
+        wheelMultiplier: 1,
+        touchMultiplier: 2,
+      });
+
+      function raf(time: number) {
+        lenisInstance?.raf(time);
+        rafId = requestAnimationFrame(raf);
+      }
+
+      rafId = requestAnimationFrame(raf);
+
+      // 縦スクロールを横スクロールに変換
+      wheelHandler = (e: WheelEvent) => {
+        if (!galleryContainer) return;
+
+        // deltaY（縦スクロール）を横スクロールに変換
+        e.preventDefault();
+        galleryContainer.scrollLeft += e.deltaY;
+      };
+      window.addEventListener('wheel', wheelHandler, { passive: false });
+
+      // Loaded animation — staggered clip-path reveal
+      const items = galleryContainer.querySelectorAll('.gallery-item');
+      gsap.fromTo(
+        items,
+        { clipPath: 'inset(100% 0% 0% 0%)' },
+        {
+          clipPath: 'inset(0% 0% 0% 0%)',
+          duration: 1.0,
+          stagger: 0.075,
+          ease: 'power3.out'
+        }
+      );
+    }
+
+    // Cleanup on unmount — prevents wheel hijack from leaking to other pages
+    return () => {
+      timeoutIds.forEach(clearTimeout);
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      if (wheelHandler) window.removeEventListener('wheel', wheelHandler);
+      lenisInstance?.destroy();
+    };
+  });
+</script>
+
+<svelte:head>
+  <title>Kazuki Kaneko / one inc.</title>
+</svelte:head>
+
+<main class="top-page">
+  <!-- Reveal Animation -->
+  <div class="reveal-overlay" class:hidden={revealStep === 3}>
+    {#if revealStep === 1}
+      <div class="reveal-text">
+        <ShuffleText text="We opt for a novel experience." />
       </div>
     {/if}
-  
-    {#if projects.length >= 8}
-      <Grid
-        {projects}
-        gridWidth="94vw"
-        gridHeight="60vh"
-        gridGap=".25vw"
-        gridPositionBottom="3vw"
-        moveDistance=".75vw"
-        defaultText="OPT FOR A NOVEL <br>EXPERIENCE"
-        {showGrid}
-        bind:mainTextElement
-      />
-    {:else}
-      <div class="error-message">
-        <p>Not enough works to display grid (need 8, found {projects.length})</p>
-        <p>Please add more works with thumbnails in microCMS.</p>
+    
+    {#if revealStep === 2}
+      <div class="reveal-text">
+        <ShuffleText text="Welcome:)" />
       </div>
     {/if}
   </div>
-  
-  <style>
-    :global(body) {
-      margin: 0;
-      padding: 0;
-      background: #ffffff;
-      color: #000000;
-      font-family: 'Helvetica Neue', 'Helvetica', Arial, sans-serif;
-      font-weight: 300;
-    }
-  
-    .page {
-      position: relative;
-      min-height: 100vh;
-      overflow: hidden;
-    }
-  
-    /* Opening Animation */
-    .opening-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 9998;
-      pointer-events: none;
-    }
-  
-    /* Grid Cover - 現在のグリッド位置に合わせる */
-    .grid-cover {
-      position: absolute;
-      bottom: 3vw;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 94vw;
-      height: 60vh;
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      grid-template-rows: repeat(2, 1fr);
-      gap: 0.25vw;
-    }
-  
-    .grid-cover.single-cover {
-      display: block;
-      background: #D8DEE3;
-      gap: 0;
-    }
-  
-    .cover-tile {
-      background: #D8DEE3;
-      width: 100%;
-      height: 100%;
-    }
-  
-    /* Error Message */
-    .error-message {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      padding: 60px;
-      text-align: center;
-    }
-  
-    .error-message p {
+
+  {#if showContent}
+    <!-- Fixed Message -->
+    <div class="fixed-message">
+      <ShuffleText text="We bring an inventive perspective to" inline />
+      <br />
+      <ShuffleText text="every project with our ideas and passion." inline />
+    </div>
+
+    <!-- Horizontal Scroll Gallery -->
+    <div class="horizontal-gallery" bind:this={galleryContainer}>
+      <div class="gallery-track">
+        {#each works as work, index}
+          <a 
+            href="/works/{work.id}"
+            class="gallery-item" 
+            data-index={index}
+          >
+            <img 
+              src={work.thumbnail?.url || ''} 
+              alt={work.title}
+              loading="lazy"
+            />
+          </a>
+        {/each}
+      </div>
+    </div>
+  {/if}
+</main>
+
+<style>
+  .top-page {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    background: var(--background);
+  }
+
+  /* Reveal Animation */
+  .reveal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--background);
+    z-index: 9999;
+    pointer-events: none;
+    transition: opacity 0.6s ease-out;
+  }
+
+  .reveal-overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .reveal-text {
+    position: absolute;
+    font-size: 24px;
+    font-family: var(--font-en-main);
+    font-weight: var(--font-weight-light);
+    color: var(--black);
+  }
+
+  /* Fixed Message */
+  .fixed-message {
+    position: fixed;
+    top: calc(var(--shuffle-height) + 20px);
+    left: var(--padding);
+    z-index: 100;
+    font-size: 32px;
+    font-family: var(--font-en-main);
+    font-weight: var(--font-weight-light);
+    color: var(--black);
+    line-height: 1.4;
+  }
+
+  /* Horizontal Gallery */
+  .horizontal-gallery {
+    position: fixed;
+    bottom: 30px;
+    left: 0;
+    width: 100vw;
+    height: 55vh;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .gallery-track {
+    display: flex;
+    gap: 20px;
+    padding: 0 var(--padding);
+    height: 100%;
+  }
+
+  .gallery-item {
+    flex-shrink: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    cursor: pointer;
+    transition: opacity 0.3s ease;
+  }
+
+  .gallery-item:hover {
+    opacity: 0.8;
+  }
+
+  .gallery-item img {
+    height: 100%;
+    width: auto;
+    object-fit: contain;
+    display: block;
+  }
+
+  /* スクロールバーを隠す */
+  .horizontal-gallery::-webkit-scrollbar {
+    display: none;
+  }
+
+  .horizontal-gallery {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  @media (max-width: 767px) {
+    .reveal-text {
       font-size: 18px;
-      margin: 10px 0;
     }
+
+    .fixed-message {
+      font-size: 20px;
+      top: calc(var(--shuffle-height) + 15px);
+      left: 15px;
+      line-height: 1.3;
+    }
+
+    .horizontal-gallery {
+      bottom: 15px;
+      height: 50vh;
+    }
+
+    .gallery-track {
+      gap: 15px;
+      padding: 0 15px;
+    }
+  }
   
-    @media (max-width: 768px) {
-      .grid-cover {
-        width: 90vw;
-      }
-    }
-  </style>
+</style>

@@ -341,6 +341,12 @@
       font-size: 11px;
     }
 
+    /* Drop the desktop-only 70% inset on mobile — full bleed */
+    .grid_gallery_container {
+      width: 100%;
+      margin-left: 0;
+    }
+
     .grid_gallery_container[data-size-grid='60%'],
     .grid_gallery_container[data-size-grid='80%'],
     .grid_gallery_container[data-size-grid='100%'],

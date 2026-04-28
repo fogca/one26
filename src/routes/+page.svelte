@@ -1,274 +1,171 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { browser } from '$app/environment';
-  import { gsap } from 'gsap';
-  import Lenis from '@studio-freight/lenis';
-  import ShuffleText from '$lib/components/ShuffleText.svelte';
-  import type { PageData } from './$types';
+	import { onMount } from 'svelte';
+	import { browser } from '$app/environment';
+	import ShuffleText from '$lib/components/ShuffleText.svelte';
+	import HorizontalGallery from '$lib/components/HorizontalGallery.svelte';
+	import type { PageData } from './$types';
 
-  let { data }: { data: PageData } = $props();
+	let { data }: { data: PageData } = $props();
 
-  let showContent = $state(false);
-  let currentIndex = $state(0);
-  let galleryContainer: HTMLElement | undefined;
-  let works = $derived(data.works || []); // worksデータ
-  
-  let revealStep = $state(0); // 0: hidden, 1: "We opt...", 2: "Welcome:)", 3: show gallery
+	let showContent = $state(false);
+	let revealStep = $state(0); // 0: hidden, 1: "We bring…", 2: also "Welcome:)", 3: show gallery
+	let works = $derived(data.works || []);
 
-  onMount(() => {
-    if (!browser) return;
+	// Hero copy with explicit line break baked in per viewport (avoids word wrap
+	// jumping during shuffle reveal). Default to desktop layout for SSR; onMount
+	// swaps to mobile copy if width ≤ 767.
+	let heroText = $state(
+		"We bring an inventive perspective<br>to every project with our ideas and passion."
+	);
 
-    // Opening animation with ShuffleText
-    setTimeout(() => {
-      revealStep = 1; // "We opt for a novel experience."
-    }, 300);
+	// Map microCMS works → HorizontalGallery's item shape.
+	let galleryItems = $derived(
+		works
+			.filter((w) => w.thumbnail?.url)
+			.map((w) => ({ id: w.id, src: w.thumbnail!.url, alt: w.title }))
+	);
 
-    setTimeout(() => {
-      revealStep = 2; // "Welcome:)"
-    }, 2000);
+	onMount(() => {
+		if (!browser) return;
 
-    setTimeout(() => {
-      revealStep = 3; // Show gallery
-      showContent = true;
-      
-      // Lenis horizontal scroll 初期化
-      setTimeout(() => {
-        initHorizontalScroll();
-      }, 100);
-    }, 3500);
+		// Pick the viewport-appropriate hero copy ONCE before the second reveal
+		// step (revealStep === 2 fires at 2000 ms — onMount runs synchronously
+		// at 0 ms so heroText is settled by then).
+		if (window.innerWidth <= 767) {
+			heroText =
+				"We bring an inventive perspective<br>to every project<br>with our ideas and passion.";
+		}
 
-    function initHorizontalScroll() {
-      if (!galleryContainer) {
-        console.log('Gallery container not found');
-        return;
-      }
+		const timeoutIds: ReturnType<typeof setTimeout>[] = [];
 
-      const track = galleryContainer.querySelector('.gallery-track') as HTMLElement;
-      if (!track) {
-        console.log('Gallery track not found');
-        return;
-      }
+		timeoutIds.push(
+			setTimeout(() => {
+				revealStep = 1;
+			}, 300)
+		);
+		timeoutIds.push(
+			setTimeout(() => {
+				revealStep = 2;
+			}, 2000)
+		);
+		timeoutIds.push(
+			setTimeout(() => {
+				revealStep = 3;
+				showContent = true;
+			}, 3500)
+		);
 
-      const lenis = new Lenis({
-        wrapper: galleryContainer,
-        content: track,
-        orientation: 'horizontal',
-        gestureOrientation: 'horizontal',
-        smoothWheel: true,
-        wheelMultiplier: 1,
-        touchMultiplier: 2,
-      });
-
-      function raf(time: number) {
-        lenis.raf(time);
-        requestAnimationFrame(raf);
-      }
-
-      requestAnimationFrame(raf);
-
-      // 縦スクロールを横スクロールに変換
-      window.addEventListener('wheel', (e) => {
-        if (!galleryContainer) return;
-        
-        // deltaY（縦スクロール）を横スクロールに変換
-        e.preventDefault();
-        galleryContainer.scrollLeft += e.deltaY;
-      }, { passive: false });
-
-      // IntersectionObserver で現在表示中の画像を検知
-      const images = galleryContainer.querySelectorAll('.gallery-item');
-      
-      if (images.length === 0) {
-        console.log('No gallery items found');
-        return;
-      }
-      
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
-              const index = parseInt(entry.target.getAttribute('data-index') || '0');
-              currentIndex = index;
-            }
-          });
-        },
-        {
-          root: galleryContainer,
-          threshold: 0.5,
-          rootMargin: '0px'
-        }
-      );
-
-      images.forEach((img) => observer.observe(img));
-    }
-  });
+		return () => {
+			timeoutIds.forEach(clearTimeout);
+		};
+	});
 </script>
 
 <svelte:head>
-  <title>Kazuki Kaneko / one inc.</title>
+	<title>Kazuki Kaneko / one inc.</title>
 </svelte:head>
 
 <main class="top-page">
-  <!-- Reveal Animation -->
-  <div class="reveal-overlay" class:hidden={revealStep === 3}>
-    {#if revealStep === 1}
-      <div class="reveal-text">
-        <ShuffleText text="We opt for a novel experience." />
-      </div>
-    {/if}
-    
-    {#if revealStep === 2}
-      <div class="reveal-text">
-        <ShuffleText text="Welcome:)" />
-      </div>
-    {/if}
-  </div>
+	<!-- Reveal Animation: bg fades at step 3; final line stays mounted + visible.
+	     After reveal completes, the overlay drops to z-index 1 so it no longer
+	     intercepts the Header (z 100) and the shuffle text behaves like the
+	     global one on other pages (just sits in normal stacking). -->
+	<div class="reveal-overlay" class:revealed={revealStep === 3}>
+		<div class="reveal-overlay-bg" class:hidden={revealStep === 3} aria-hidden="true"></div>
+		{#if revealStep === 1}
+			<div class="reveal-text">
+				<ShuffleText text="Welcome:)" />
+			</div>
+		{/if}
 
-  {#if showContent}
-    <!-- Project Title -->
-    <div class="project-title-display">
-      <ShuffleText text={works[currentIndex]?.title || ''} />
-    </div>
+		{#if revealStep === 2 || revealStep === 3}
+			<div class="reveal-text">
+				<ShuffleText text={heroText} />
+			</div>
+		{/if}
+	</div>
 
-    <!-- Horizontal Scroll Gallery -->
-    <div class="horizontal-gallery" bind:this={galleryContainer}>
-      <div class="gallery-track">
-        {#each works as work, index}
-          <a 
-            href="/works/{work.id}"
-            class="gallery-item" 
-            data-index={index}
-          >
-            <img 
-              src={work.thumbnail?.url || ''} 
-              alt={work.title}
-              loading="lazy"
-            />
-          </a>
-        {/each}
-      </div>
-    </div>
-  {/if}
+	{#if showContent}
+		<div class="gallery-wrap">
+			<HorizontalGallery items={galleryItems} hoverLabel="Discover" />
+		</div>
+	{/if}
 </main>
 
 <style>
-  .top-page {
-    position: relative;
-    width: 100%;
-    min-height: 100vh;
-    background: var(--background);
-  }
+	.top-page {
+		position: relative;
+		width: 100%;
+		min-height: 100vh;
+		background: var(--background);
+	}
 
-  /* Reveal Animation */
-  .reveal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--background);
-    z-index: 9999;
-    pointer-events: none;
-    transition: opacity 0.6s ease-out;
-  }
+	/* ── Reveal Animation overlay ──
+	   During the reveal (steps 1, 2) the overlay sits at z 9999 to fully cover
+	   the page (Header + content). Once the reveal lands (step 3) we drop the
+	   stacking so the overlay matches the layout of every other page — the
+	   shuffle text is no longer pinned above the Header. */
+	.reveal-overlay {
+		position: fixed;
+		top: 0;
+		left: 0;
+		width: 100vw;
+		height: 100vh;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 9999;
+		pointer-events: none;
+	}
 
-  .reveal-overlay.hidden {
-    opacity: 0;
-    pointer-events: none;
-  }
+	.reveal-overlay.revealed {
+		z-index: 1;
+	}
 
-  .reveal-text {
-    position: absolute;
-    font-size: 24px;
-    font-family: var(--font-en-main);
-    font-weight: var(--font-weight-light);
-    color: var(--black);
-  }
+	.reveal-overlay-bg {
+		position: absolute;
+		inset: 0;
+		background: var(--background);
+		z-index: 0;
+		transition: opacity 0.6s ease-out;
+	}
 
-  /* Project Title Display */
-  .project-title-display {
-    position: fixed;
-    top: calc(var(--shuffle-height) + 20px);
-    left: var(--padding);
-    z-index: 100;
-    font-size: 32px;
-    font-family: var(--font-en-main);
-    font-weight: var(--font-weight-light);
-    color: var(--black);
-  }
+	.reveal-overlay-bg.hidden {
+		opacity: 0;
+		pointer-events: none;
+	}
 
-  /* Horizontal Gallery */
-  .horizontal-gallery {
-    position: fixed;
-    bottom: 30px;
-    left: 0;
-    width: 100vw;
-    height: 55vh;
-    overflow-x: auto;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
-  }
+	/* No font-size / weight here — let the inner ShuffleText (.text-content.h1)
+	   keep the same h1 sizing as the global ShuffleText on other pages. */
+	.reveal-text {
+		position: relative;
+		z-index: 1;
+		color: var(--key);
+	}
 
-  .gallery-track {
-    display: flex;
-    gap: 20px;
-    padding: 0 var(--padding);
-    height: 100%;
-  }
+	/* ── Gallery container — anchored to bottom-left (20px / 20px) ── */
+	.gallery-wrap {
+		position: fixed;
+		left: 0;
+		bottom: 20px;
+		width: 100vw;
+		height: 40vh;
+	}
 
-  .gallery-item {
-    flex-shrink: 0;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    text-decoration: none;
-    cursor: pointer;
-    transition: opacity 0.3s ease;
-  }
+	/* The home reveal text is purely decorative — keep it from intercepting
+	   pointer events so the Header (z-index 100) underneath stays clickable
+	   even after the reveal-overlay (z-index 9999) settles in place. */
+	.reveal-text :global(.shuffle-text) {
+		pointer-events: none;
+	}
 
-  .gallery-item:hover {
-    opacity: 0.8;
-  }
-
-  .gallery-item img {
-    height: 100%;
-    width: auto;
-    object-fit: contain;
-    display: block;
-  }
-
-  /* スクロールバーを隠す */
-  .horizontal-gallery::-webkit-scrollbar {
-    display: none;
-  }
-
-  .horizontal-gallery {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-
-  @media (max-width: 767px) {
-    .reveal-text {
-      font-size: 18px;
-    }
-
-    .project-title-display {
-      font-size: 24px;
-      top: calc(var(--shuffle-height) + 15px);
-      left: 15px;
-    }
-
-    .horizontal-gallery {
-      bottom: 15px;
-      height: 50vh;
-    }
-
-    .gallery-track {
-      gap: 15px;
-      padding: 0 15px;
-    }
-  }
+	@media (max-width: 767px) {
+		/* On mobile the reveal copy anchors to the top of the viewport (matches
+		   the rest of the site's mobile flow) instead of being vertically centered.
+		   The global ShuffleText mobile padding-top: 15vh applies here too — it
+		   keeps the hero copy clear of the Header instead of stacking on top. */
+		.reveal-overlay {
+			align-items: flex-start;
+		}
+	}
 </style>
