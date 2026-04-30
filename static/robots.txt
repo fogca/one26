@@ -1,6 +1,39 @@
-# PRE-LAUNCH MODE — block all crawlers until the site is publicly ready.
-# Switch back to `Allow: /` (and uncomment the Sitemap line) on launch day.
+# PRE-LAUNCH MODE.
+# - Search engine crawlers (Googlebot, Bingbot, *) are blocked so the
+#   pre-launch site doesn't show up in Google.
+# - Social-share preview bots (Facebook / X / LINE / Slack / Discord) are
+#   allowed so OGP previews render in DMs and the Sharing Debuggers.
+#
+# When the site goes public:
+#   1. Replace the `User-agent: *` block with `User-agent: *` / `Allow: /`
+#   2. Uncomment the Sitemap line below
+#   3. Drop the per-bot Allow blocks (the wildcard Allow covers them all)
+
 User-agent: *
 Disallow: /
+
+User-agent: facebookexternalhit
+Disallow:
+
+User-agent: Facebot
+Disallow:
+
+User-agent: Twitterbot
+Disallow:
+
+User-agent: LINEBOT
+Disallow:
+
+User-agent: Slackbot
+Disallow:
+
+User-agent: Slackbot-LinkExpanding
+Disallow:
+
+User-agent: Discordbot
+Disallow:
+
+User-agent: Pinterestbot
+Disallow:
 
 # Sitemap: https://one.tokyo.jp/sitemap.xml
