@@ -4,6 +4,7 @@
 	const links = [
 		{ href: '/works', text: 'Archives' },
 		{ href: '/office', text: 'About' },
+		{ href: '/jobs', text: 'Jobs' },
 		{ href: '/contact', text: 'Contact' }
 	];
 
@@ -62,6 +63,26 @@
 			</a>
 		{/each}
 	</nav>
+
+	<!-- Bottom-left: external links (Instagram + website). Visually quiet. -->
+	<div class="drawer-meta" lang="en">
+		<a
+			href="https://www.instagram.com/one.inc.tokyo/"
+			target="_blank"
+			rel="noopener noreferrer"
+			class="drawer-meta-link"
+		>
+			Instagram
+		</a>
+		<a
+			href="https://www.one.tokyo.jp"
+			target="_blank"
+			rel="noopener noreferrer"
+			class="drawer-meta-link"
+		>
+			www.one.tokyo.jp
+		</a>
+	</div>
 </div>
 
 <style>
@@ -117,11 +138,19 @@
 		transform: translateY(-3.5px) rotate(-30deg);
 	}
 
+	/* When the drawer is open, the background is always white — force the X
+	   to use the key color so it stays visible on dark pages (e.g. /jobs). */
+	.hamburger.open .line {
+		background-color: var(--key);
+	}
+
 	/* ── Desktop inline nav ── */
 	header .nav .link {
 		margin-right: 10px;
 		display: inline-block;
 		perspective: 600px;
+		font-weight: var(--font-weight-medium);
+		font-variation-settings: 'wght' var(--font-weight-medium);
 	}
 
 	header .nav .char {
@@ -166,10 +195,8 @@
 			display: none;
 		}
 
-		/* Logo at compact mobile size */
-		header .home :global(svg) {
-			height: 16.5px;
-		}
+		/* Logo (text) sizes itself via its own media query — no SVG to scale.
+		   This used to override SVG height; kept the comment for context. */
 
 		/* Drawer */
 		.menu-drawer {
@@ -179,7 +206,7 @@
 			left: 0;
 			width: 100vw;
 			height: 100vh;
-			background: var(--background);
+			background: #ffffff;
 			z-index: 99; /* below header (100) so the X stays clickable */
 			padding: calc(var(--padding) + 60px) var(--padding) var(--padding);
 			opacity: 0;
@@ -195,15 +222,41 @@
 		.menu-drawer nav {
 			display: flex;
 			flex-direction: column;
-			gap: 24px;
+			gap: 12px;
 		}
 
 		.menu-drawer .drawer-link {
-			font-size: 28px;
+			font-size: 32px;
 			line-height: 1.1;
 			letter-spacing: -0.02em;
 			color: var(--key);
 			text-decoration: none;
+			font-weight: var(--font-weight-light);
+			font-variation-settings: 'wght' var(--font-weight-light);
+		}
+
+		/* Bottom-left meta links — Instagram + website */
+		.menu-drawer .drawer-meta {
+			position: absolute;
+			left: var(--padding);
+			bottom: var(--padding);
+			display: flex;
+			flex-direction: column;
+			gap: 6px;
+		}
+
+		.menu-drawer .drawer-meta-link {
+			font-size: 12px;
+			line-height: 1.4;
+			color: var(--key);
+			text-decoration: none;
+			letter-spacing: 0.01em;
+			opacity: 0.8;
+			font-weight: var(--font-weight-medium);
+			font-variation-settings: 'wght' var(--font-weight-medium);
+		}
+		.menu-drawer .drawer-meta-link:hover {
+			opacity: 1;
 		}
 	}
 </style>

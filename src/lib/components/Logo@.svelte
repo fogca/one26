@@ -1,41 +1,131 @@
-<svg id="_レイヤー_1" data-name="レイヤー 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 393.91 29.95">
+<!--
+  Logo@.svelte
+  ────────────────────────────────────────────────────────────
+  Animated text logo. Reads "one inc." (note the space after
+  "one" — required).
 
-  <path class="cls-1" d="M0,.97h2.81v13.86h.07l2.88-3.24L15.41.97h3.46L7.99,12.82l12.17,13.72h-3.82L6.16,14.9l-3.35,3.64v7.99H0V.97Z"/>
-  <path class="cls-1" d="M24.84,9.94c.55-.29,1.2-.53,1.94-.74.74-.2,1.55-.31,2.41-.31,2.04,0,3.64.62,4.79,1.87s1.73,3.22,1.73,5.9v6.08c.14,1.25.28,2.51.4,3.78l-2.27.14-.5-2.52-4.5,2.74c-1.18,0-2.3-.2-3.37-.59-1.07-.4-1.93-.98-2.59-1.75-.66-.77-.99-1.68-.99-2.74,0-1.8.98-3.13,2.93-4s4.71-1.3,8.26-1.3c0-2.06-.39-3.5-1.17-4.32-.78-.82-1.79-1.22-3.04-1.22-.91,0-1.74.17-2.48.5-.74.34-1.4.7-1.98,1.08l-.86-1.8c.31-.26.74-.54,1.3-.83ZM26.86,18.97c-1.51.58-2.27,1.48-2.27,2.7,0,.65.21,1.21.63,1.69.42.48.95.84,1.6,1.08.65.24,1.31.38,1.98.43l4.28-2.45v-4.36c-2.64.02-4.72.32-6.23.9Z"/>
-  <path class="cls-1" d="M53.82,9.25l.22,1.73-10.44,13.36h10.4v2.2h-13.54l-.32-1.84,10.55-13.39h-10.04v-2.05h13.18Z"/>
-  <path class="cls-1" d="M61.27,9.25v10.08c0,1.01.2,1.9.59,2.66.4.77.94,1.37,1.64,1.82.7.44,1.5.69,2.41.74l4.75-2.88v-12.42h2.63v13.03l.43,4.25-2.27.14-.54-3.06-5.22,3.28c-1.13,0-2.23-.26-3.29-.77s-1.96-1.31-2.66-2.38c-.71-1.07-1.06-2.41-1.06-4.01v-10.48h2.59Z"/>
-  <path class="cls-1" d="M82.08,0v18.9h.04l9.22-9.65h2.92l-7.09,7.42,8.57,9.86h-3.46l-6.88-7.88-3.31,3.38v4.5h-2.59V0h2.59Z"/>
-  <path class="cls-1" d="M101.72,2.43c.32.32.49.73.49,1.21s-.16.88-.49,1.19c-.32.31-.74.47-1.24.47s-.95-.16-1.28-.47c-.32-.31-.49-.71-.49-1.19s.16-.88.49-1.21c.32-.32.75-.49,1.28-.49s.92.16,1.24.49ZM101.73,9.25v17.28h-2.63V9.25h2.63Z"/>
-  <path class="cls-1" d="M118.29.97h2.81v13.86h.07l2.88-3.24,9.65-10.62h3.46l-10.87,11.84,12.17,13.72h-3.82l-10.19-11.63-3.35,3.64v7.99h-2.81V.97Z"/>
-  <path class="cls-1" d="M143.13,9.94c.55-.29,1.2-.53,1.94-.74.74-.2,1.55-.31,2.41-.31,2.04,0,3.64.62,4.79,1.87s1.73,3.22,1.73,5.9v6.08c.14,1.25.28,2.51.4,3.78l-2.27.14-.5-2.52-4.5,2.74c-1.18,0-2.3-.2-3.37-.59-1.07-.4-1.93-.98-2.59-1.75-.66-.77-.99-1.68-.99-2.74,0-1.8.98-3.13,2.93-4s4.71-1.3,8.26-1.3c0-2.06-.39-3.5-1.17-4.32-.78-.82-1.79-1.22-3.04-1.22-.91,0-1.74.17-2.48.5-.74.34-1.4.7-1.98,1.08l-.86-1.8c.31-.26.74-.54,1.3-.83ZM145.15,18.97c-1.51.58-2.27,1.48-2.27,2.7,0,.65.21,1.21.63,1.69.42.48.95.84,1.6,1.08.65.24,1.31.38,1.98.43l4.28-2.45v-4.36c-2.64.02-4.72.32-6.23.9Z"/>
-  <path class="cls-1" d="M161.85,9.14l.5,3.02,5.26-3.28c1.15,0,2.26.26,3.33.77,1.07.52,1.96,1.31,2.68,2.38.72,1.07,1.08,2.41,1.08,4.01v10.48h-2.63v-10.15c0-1.01-.2-1.9-.59-2.66-.4-.77-.94-1.37-1.64-1.82-.7-.44-1.51-.68-2.45-.7l-4.79,2.88v12.46h-2.59v-13.03l-.43-4.25,2.27-.11Z"/>
-  <path class="cls-1" d="M190.8,12.4c-.82-1.02-1.93-1.53-3.35-1.53-1.01,0-1.91.28-2.7.83-.79.55-1.41,1.33-1.85,2.32-.44,1-.67,2.15-.67,3.47s.22,2.6.67,3.69c.44,1.09,1.1,1.96,1.96,2.59.86.64,1.9.95,3.1.95.96,0,1.96-.22,3.01-.65,1.04-.43,1.95-1.02,2.72-1.76l.9,1.66c-.82.89-1.86,1.59-3.13,2.11-1.27.52-2.6.77-4,.77-1.54,0-2.9-.39-4.1-1.17s-2.14-1.85-2.81-3.22c-.67-1.37-1.01-2.89-1.01-4.57s.32-3.27.97-4.63c.65-1.36,1.59-2.42,2.83-3.2,1.24-.78,2.68-1.17,4.34-1.17,2.21,0,3.95.77,5.22,2.32,1.27,1.55,1.91,3.7,1.91,6.46l-13.07,1.4-.14-1.73,10.51-1.08c-.05-1.56-.48-2.85-1.3-3.87Z"/>
-  <path class="cls-1" d="M202.39,0v18.9h.04l9.22-9.65h2.92l-7.09,7.42,8.57,9.86h-3.46l-6.88-7.88-3.31,3.38v4.5h-2.59V0h2.59Z"/>
-  <path class="cls-1" d="M229.98,10.08c1.28.79,2.29,1.87,3.02,3.24s1.1,2.89,1.1,4.57-.37,3.2-1.1,4.57c-.73,1.37-1.74,2.45-3.02,3.24-1.28.79-2.73,1.19-4.34,1.19s-3.02-.4-4.3-1.19c-1.28-.79-2.29-1.87-3.01-3.24-.72-1.37-1.08-2.89-1.08-4.57s.36-3.2,1.08-4.57c.72-1.37,1.72-2.45,3.01-3.24,1.28-.79,2.72-1.19,4.3-1.19s3.05.4,4.34,1.19ZM222.71,11.99c-.85.6-1.52,1.42-2.02,2.45-.49,1.03-.74,2.17-.74,3.42s.25,2.39.74,3.44c.49,1.04,1.16,1.86,2.02,2.45.85.59,1.83.88,2.93.88s2.09-.29,2.97-.88c.88-.59,1.56-1.4,2.05-2.45s.74-2.19.74-3.44-.25-2.39-.74-3.42-1.18-1.85-2.05-2.45c-.88-.6-1.87-.9-2.97-.9s-2.08.3-2.93.9Z"/>
-  <path class="cls-1" d="M249.44,29.95h-2.38l9.36-28.98h2.38l-9.36,28.98Z"/>
-  <path class="cls-1" d="M284.52,10.08c1.28.79,2.29,1.87,3.02,3.24.73,1.37,1.1,2.89,1.1,4.57s-.37,3.2-1.1,4.57c-.73,1.37-1.74,2.45-3.02,3.24s-2.73,1.19-4.34,1.19-3.02-.4-4.3-1.19c-1.28-.79-2.29-1.87-3.01-3.24-.72-1.37-1.08-2.89-1.08-4.57s.36-3.2,1.08-4.57,1.72-2.45,3.01-3.24c1.28-.79,2.72-1.19,4.3-1.19s3.05.4,4.34,1.19ZM277.25,11.99c-.85.6-1.52,1.42-2.02,2.45s-.74,2.17-.74,3.42.25,2.39.74,3.44,1.16,1.86,2.02,2.45c.85.59,1.83.88,2.93.88s2.09-.29,2.97-.88c.88-.59,1.56-1.4,2.05-2.45.49-1.04.74-2.19.74-3.44s-.25-2.39-.74-3.42c-.49-1.03-1.18-1.85-2.05-2.45-.88-.6-1.87-.9-2.97-.9s-2.08.3-2.93.9Z"/>
-  <path class="cls-1" d="M295.56,9.14l.5,3.02,5.26-3.28c1.15,0,2.26.26,3.33.77,1.07.52,1.96,1.31,2.68,2.38.72,1.07,1.08,2.41,1.08,4.01v10.48h-2.63v-10.15c0-1.01-.2-1.9-.59-2.66-.4-.77-.94-1.37-1.64-1.82-.7-.44-1.51-.68-2.45-.7l-4.79,2.88v12.46h-2.59v-13.03l-.43-4.25,2.27-.11Z"/>
-  <path class="cls-1" d="M324.5,12.4c-.82-1.02-1.93-1.53-3.35-1.53-1.01,0-1.91.28-2.7.83-.79.55-1.41,1.33-1.85,2.32-.44,1-.67,2.15-.67,3.47s.22,2.6.67,3.69c.44,1.09,1.1,1.96,1.96,2.59.86.64,1.9.95,3.1.95.96,0,1.96-.22,3.01-.65,1.04-.43,1.95-1.02,2.72-1.76l.9,1.66c-.82.89-1.86,1.59-3.13,2.11-1.27.52-2.6.77-4,.77-1.54,0-2.9-.39-4.1-1.17s-2.14-1.85-2.81-3.22c-.67-1.37-1.01-2.89-1.01-4.57s.32-3.27.97-4.63c.65-1.36,1.59-2.42,2.83-3.2,1.24-.78,2.68-1.17,4.34-1.17,2.21,0,3.95.77,5.22,2.32,1.27,1.55,1.91,3.7,1.91,6.46l-13.07,1.4-.14-1.73,10.51-1.08c-.05-1.56-.48-2.85-1.3-3.87Z"/>
-  <path class="cls-1" d="M345.83,2.43c.32.32.49.73.49,1.21s-.16.88-.49,1.19c-.32.31-.74.47-1.24.47s-.95-.16-1.28-.47c-.32-.31-.49-.71-.49-1.19s.16-.88.49-1.21c.32-.32.75-.49,1.28-.49s.92.16,1.24.49ZM345.85,9.25v17.28h-2.63V9.25h2.63Z"/>
-  <path class="cls-1" d="M353.95,9.14l.5,3.02,5.26-3.28c1.15,0,2.26.26,3.33.77,1.07.52,1.96,1.31,2.68,2.38.72,1.07,1.08,2.41,1.08,4.01v10.48h-2.63v-10.15c0-1.01-.2-1.9-.59-2.66-.4-.77-.94-1.37-1.64-1.82s-1.51-.68-2.45-.7l-4.79,2.88v12.46h-2.59v-13.03l-.43-4.25,2.27-.11Z"/>
-  <path class="cls-1" d="M382.98,11.7c-.88-.41-1.81-.61-2.79-.61-1.15,0-2.18.29-3.08.88-.9.59-1.6,1.4-2.09,2.43s-.74,2.18-.74,3.46.25,2.46.76,3.49,1.21,1.84,2.11,2.41c.9.58,1.93.86,3.08.86.96,0,1.89-.22,2.79-.65.9-.43,1.7-1.01,2.39-1.73l.94,1.66c-.77.91-1.7,1.63-2.81,2.16-1.1.53-2.33.79-3.67.79-1.61,0-3.04-.4-4.28-1.19-1.25-.79-2.23-1.87-2.93-3.22-.71-1.36-1.06-2.86-1.06-4.52s.35-3.17,1.06-4.55c.71-1.38,1.69-2.47,2.95-3.28,1.26-.8,2.72-1.21,4.37-1.21,1.25,0,2.41.23,3.47.7,1.07.47,1.99,1.12,2.75,1.96l-.94,1.84c-.65-.72-1.41-1.28-2.29-1.69Z"/>
-  <path class="cls-1" d="M390.94,23.87c.32-.31.74-.47,1.24-.47s.92.16,1.24.47c.32.31.49.71.49,1.19s-.16.88-.49,1.19-.74.47-1.24.47-.92-.16-1.24-.47c-.32-.31-.49-.71-.49-1.19s.16-.88.49-1.19Z"/>
-</svg>
+  Two continuous animations:
+
+  1. Weight oscillation — font-weight loops between a light and
+     a heavy weight. Uses the `font-weight` property (not
+     `font-variation-settings`) because CSS only interpolates
+     font-weight smoothly across browsers. The font is a
+     variable font so intermediate weights render correctly.
+
+  2. 3D flip — every 5 s each character flips a full 360° on
+     the X axis with a tiny per-char stagger (same trick as
+     Header nav links on hover, just driven by an animation).
+
+  Notes
+  • The container is `inline-block`, NOT `inline-flex`, because
+    flex containers collapse text-only nodes (e.g. the space
+    between "one" and "inc."). With inline-block the space char
+    span renders as a real space.
+-->
+
+<script lang="ts">
+	const text = 'one inc.';
+	const chars = text.split('');
+</script>
+
+<span class="logo" lang="en" aria-label={text}>
+	{#each chars as ch, i}
+		<span class="char" class:space={ch === ' '} style:--i={i} aria-hidden="true">
+			<span class="face front">{ch}</span>
+			<span class="face back">{ch}</span>
+		</span>
+	{/each}
+</span>
 
 <style>
-  svg {
-    width: 100%;
-    height: 18px;
-    color: inherit;
-  }
+	.logo {
+		display: inline-block;
+		font-family: var(--font-en-main, 'Helvetica Neue', Arial, sans-serif);
+		font-size: 24px;
+		line-height: 1;
+		letter-spacing: 0.025em;
+		color: inherit;
+		/* Base weight pulled from the global token. The animation below
+		   overrides this on each keyframe — values are intentionally
+		   *outside* the design tokens (lighter than light, heavier than
+		   medium) because they're animation extremes, not body weights. */
+		font-weight: var(--font-weight-light);
+		animation: logo-weight 4.5s ease-in-out infinite;
+	}
 
-  .cls-1 {
-    fill: currentColor;
-  }
+	/* Make sure none of the nested spans (chars, faces) inherit a different
+	   line-height that pushes the back face out of alignment with the front
+	   during the 3D flip. */
+	.logo * {
+		line-height: 1;
+	}
 
-  @media (min-width: 1560px) {
-    svg {
-      height: 20px;
-    }
-  }
+	@media (min-width: 768px) {
+		.logo {
+			font-size: 28px;
+		}
+	}
+
+	.char {
+		position: relative;
+		display: inline-block;
+		transform-style: preserve-3d;
+		/* Per-char stagger via the inline --i custom property — same approach
+		   the Header nav uses, just with a fixed cadence. */
+		animation: logo-flip 10s cubic-bezier(0.76, 0, 0.24, 1) infinite;
+		animation-delay: calc(var(--i, 0) * 0.04s);
+		will-change: transform;
+	}
+
+	/* Render the space char as a visible 5px gap. `white-space: pre` is no
+	   longer needed because the width is set explicitly. */
+	.char.space {
+		width: 5px;
+	}
+
+	.face {
+		display: inline-block;
+		-webkit-backface-visibility: hidden;
+		backface-visibility: hidden;
+	}
+
+	.face.back {
+		position: absolute;
+		inset: 0;
+		transform: rotateX(180deg);
+	}
+
+	/* Variable-font weight axis loops between thin and thick. font-weight is
+	   reliably interpolated by all major browsers; font-variation-settings
+	   was not — that's why the previous version looked static. */
+	@keyframes logo-weight {
+		0%,
+		100% {
+			font-weight: 220;
+		}
+		50% {
+			font-weight: 680;
+		}
+	}
+
+	/* Hold steady for most of the loop, then complete a single full 360°
+	   flip towards the end. The hold gives the eye a break before the
+	   motion. Adjust the 85% threshold to make the flip feel snappier or
+	   more leisurely. */
+	@keyframes logo-flip {
+		0%,
+		85% {
+			transform: rotateX(0deg);
+		}
+		100% {
+			transform: rotateX(360deg);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.logo,
+		.char {
+			animation: none;
+		}
+	}
 </style>

@@ -168,13 +168,15 @@
   .box span {
     font-size: 11px;
     line-height: 1.4;
-    font-variation-settings: 'wght' 450; 
+    font-weight: var(--font-weight-medium);
+    font-variation-settings: 'wght' var(--font-weight-medium);
   }
 
   .box h2 {
     font-size: 28px;
     margin-top: -10px;
-    font-variation-settings: 'wght' 320; 
+    font-weight: var(--font-weight-light);
+    font-variation-settings: 'wght' var(--font-weight-light);
     transition: font-variation-settings 0.5s ease-in-out;
   }
 
@@ -188,7 +190,9 @@
   a.container:hover * {color: var(--white);}
   a.container:hover h2 {
     transition: font-variation-settings 0.5s ease-in-out;
-    font-variation-settings: 'wght' 520;}
+    font-weight: var(--font-weight-medium);
+    font-variation-settings: 'wght' var(--font-weight-medium);
+  }
 
   a.container img,
   a.container .box {transition: transform 0.5s;}

@@ -11,12 +11,16 @@
 	let revealStep = $state(0); // 0: hidden, 1: "We bring…", 2: also "Welcome:)", 3: show gallery
 	let works = $derived(data.works || []);
 
-	// Hero copy with explicit line break baked in per viewport (avoids word wrap
-	// jumping during shuffle reveal). Default to desktop layout for SSR; onMount
-	// swaps to mobile copy if width ≤ 767.
-	let heroText = $state(
-		"We bring an inventive perspective<br>to every project with our ideas and passion."
-	);
+	// Hero copy. Same 3-line break across desktop and mobile so the layout
+	// stays consistent and word wrap can't shift the line during the shuffle.
+	const heroText =
+		"We bring an inventive<br>perspective to every project<br>with our ideas and passion.";
+
+	// Japanese supporting copy rendered directly below the hero shuffle.
+	// `<br class="sp">` only line-breaks on mobile (sp = smartphone) thanks
+	// to base.css's .sp / .pc visibility rules; `<br>` always breaks.
+	const heroSubtitle =
+		'時代に流されることのない普遍性と、<br class="sp">未来を切り拓く革新性が共存する<br>ヴィジュアルコミュニケーションを、<br class="sp">創造し続けます。';
 
 	// Map microCMS works → HorizontalGallery's item shape.
 	let galleryItems = $derived(
@@ -27,14 +31,6 @@
 
 	onMount(() => {
 		if (!browser) return;
-
-		// Pick the viewport-appropriate hero copy ONCE before the second reveal
-		// step (revealStep === 2 fires at 2000 ms — onMount runs synchronously
-		// at 0 ms so heroText is settled by then).
-		if (window.innerWidth <= 767) {
-			heroText =
-				"We bring an inventive<br>perspective to every project<br>with our ideas and passion.";
-		}
 
 		const timeoutIds: ReturnType<typeof setTimeout>[] = [];
 
@@ -80,14 +76,22 @@
 
 		{#if revealStep === 2 || revealStep === 3}
 			<div class="reveal-text">
-				<ShuffleText text={heroText} />
+				<ShuffleText text={heroText} subtitle={heroSubtitle} />
 			</div>
 		{/if}
 	</div>
 
 	{#if showContent}
 		<div class="gallery-wrap">
-			<HorizontalGallery items={galleryItems} hoverLabel="Discover" />
+			<!-- globalWheel: the gallery's Lenis listens to wheel on the entire
+			     window so the user can drive horizontal scroll from anywhere on
+			     the page. Wheel inside / outside the gallery now go through
+			     exactly the same handler — same feel, same smoothing. -->
+			<HorizontalGallery
+				items={galleryItems}
+				hoverLabel="Discover"
+				globalWheel
+			/>
 		</div>
 	{/if}
 </main>
@@ -160,12 +164,20 @@
 	}
 
 	@media (max-width: 767px) {
-		/* On mobile the reveal copy anchors to the top of the viewport (matches
-		   the rest of the site's mobile flow) instead of being vertically centered.
-		   The global ShuffleText mobile padding-top: 15vh applies here too — it
-		   keeps the hero copy clear of the Header instead of stacking on top. */
+		/* On mobile the reveal copy anchors top-left so it matches the x-axis
+		   alignment used on every other page (/office, /jobs, /contact, /works
+		   shuffle text all sit flush at the viewport's left edge on mobile).
+		   The global ShuffleText mobile padding-top: 15vh keeps it clear of
+		   the Header. */
 		.reveal-overlay {
 			align-items: flex-start;
+			justify-content: flex-start;
+		}
+
+		/* Drop the inner reveal-text wrapper's centering so the shuffle child
+		   inherits a 0-left position from the overlay's flex-start. */
+		.reveal-text {
+			width: 100%;
 		}
 	}
 </style>

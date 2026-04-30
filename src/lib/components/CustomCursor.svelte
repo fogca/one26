@@ -166,7 +166,8 @@
 		color: var(--cursor-text);
 		font-size: var(--pill-size);
 		line-height: 1;
-		font-weight: 400;
+		font-weight: var(--font-weight-regular);
+		font-variation-settings: 'wght' var(--font-weight-regular);
 		font-family: inherit;
 		letter-spacing: 0.02em;
 		white-space: nowrap;
@@ -185,5 +186,14 @@
 		opacity: 1;
 		/* Slight delay so the label fades in once the bubble has room */
 		transition: opacity 0.3s cubic-bezier(0.76, 0, 0.24, 1) 0.15s;
+	}
+
+	/* Belt-and-braces: hide the custom cursor on touch / coarse-pointer
+	   devices via CSS in addition to the JS check in onMount. Catches
+	   cases where the JS check runs before display style is applied. */
+	@media (max-width: 767px), (pointer: coarse) {
+		.cursor {
+			display: none !important;
+		}
 	}
 </style>

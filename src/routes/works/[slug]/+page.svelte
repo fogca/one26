@@ -192,7 +192,8 @@
 	  text-decoration: none;
 	  color: #000;
 	  font-size: 16px;
-	  font-weight: 300;
+	  font-weight: var(--font-weight-light);
+	  font-variation-settings: 'wght' var(--font-weight-light);
 	  transition: opacity 0.3s;
 	}
 
@@ -206,6 +207,9 @@
 	  background: #ffffff;
 	  padding-right: var(--padding);
 	  padding-top: 60px;
+	  /* Bottom buffer = NextProjectScroll fixed bar height (100px) so the
+	     last image / credit doesn't sit under the always-visible bar. */
+	  padding-bottom: 100px;
 	}
 
 	.main-image,
@@ -251,7 +255,12 @@
 		display: flex;
 		flex-direction: column;
 		min-height: 0;
-		padding-top: calc(var(--shuffle-height) + 20px);
+		/* Match the global ShuffleText mobile padding-top (15vh) so slug pages
+		   give the title the same breathing room as /office, /jobs, /contact. */
+		padding-top: 15vh;
+		/* Leave room at the bottom for the fixed NextProjectScroll bar so the
+		   tail content (.work-credit / last image) doesn't slide under it. */
+		padding-bottom: 100px;
 	  }
 
 	  .work-info-fixed,
@@ -260,8 +269,8 @@
 	  }
 
 	  .title-area  { order: 1; padding: 0 var(--padding); }
-	  .thumb-area  { order: 2; }
-	  .body-area   { order: 3; padding: 24px var(--padding) 0; }
+	  .thumb-area  { order: 2; margin-top: 20px; }
+	  .body-area   { order: 3; padding: 40px var(--padding); }
 	  .rest-area   { order: 4; padding: 0 0 40px; }
 
 	  .work-title-shuffle { margin-bottom: 10px; }
@@ -269,34 +278,28 @@
 
 	  .work-body { padding-bottom: 0; }
 
+	  /* Wider reveal range — show more of the body before the user has to
+	     tap "Show all". Soft mask uses a downward fade-to-transparent on the
+	     element itself rather than an opaque white gradient overlay; reads as
+	     a clean dimming rather than a hard edge against the page bg. */
 	  .body-text {
 		width: 100%;
 		position: relative;
-		max-height: 7.5em;
+		max-height: 14em;
 		overflow: hidden;
-		transition: max-height 0.45s ease;
-	  }
-	  .body-text::after {
-		content: '';
-		position: absolute;
-		left: 0;
-		bottom: 0;
-		width: 100%;
-		height: 3em;
-		background: linear-gradient(to bottom, rgba(255, 255, 255, 0), #ffffff 90%);
-		pointer-events: none;
-		transition: opacity 0.3s ease;
+		transition: max-height 0.45s ease, -webkit-mask-image 0.3s ease, mask-image 0.3s ease;
+		-webkit-mask-image: linear-gradient(to bottom, #000 70%, transparent 100%);
+		mask-image: linear-gradient(to bottom, #000 70%, transparent 100%);
 	  }
 	  .body-text.expanded {
 		max-height: 200em;
-	  }
-	  .body-text.expanded::after {
-		opacity: 0;
+		-webkit-mask-image: none;
+		mask-image: none;
 	  }
 
 	  .body-toggle {
 		display: inline-block;
-		margin-top: 12px;
+		margin-top: 16px;
 		padding: 0;
 		background: transparent;
 		border: none;
@@ -311,7 +314,12 @@
 
 	  .main-image,
 	  .project-image {
-		margin-bottom: 12px;
+		margin-bottom: 15px;
+	  }
+	  /* Mobile: inset project images by 2× --padding so they sit comfortably
+	     within the column. Thumbnail (.main-image) stays full-bleed. */
+	  .project-image {
+		padding: 0 calc(var(--padding) * 2);
 	  }
 	  .main-image img {
 		height: auto;
@@ -319,7 +327,7 @@
 	  .project-image img {
 		width: 100%;
 		max-height: none;
-		margin: 0 0 12px;
+		margin: 0;
 	  }
 	  .work-credit {
 		padding: 16px var(--padding) 0;

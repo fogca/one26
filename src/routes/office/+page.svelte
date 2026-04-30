@@ -67,44 +67,7 @@
 	</div>
 </div>
 
-<hr class="my-80">
 
-<div class="wrapper">
-
-	<!--<h2 class="h0 uppercase" lang="en">People</h2>-->
-	<p>現在私たちは事業拡大に伴い、デザイナー・マネージャー職を募集しています。<br>ぜひお気軽にお問い合わせください。</p>
-
-	<div class="container mt-30">
-		<h3 class="h2 uppercase mb-5" lang="en">Graphic Designer</h3>
-		<h3 class="h2 uppercase mb-5" lang="en">Assistant Designer</h3>
-		<h3 class="h2 uppercase mb-5" lang="en">Project Manager</h3>
-		<h3 class="h2 uppercase mb-5" lang="en">Internship</h3>
-	</div>
-	<div class="h4 mt-40">現在上記の職種を募集しています。ご興味のある方は募集要項をご参照のうえ、ご応募ください。<br>
-		雇用形態:業務委託または契約社員(詳細は面談時にご相談)<br>
-		給与：ご経験・スキルに応じて相談の上決定社会保険完備（契約形態による)<br>
-		応募締切:随時選考し、決定次第締切<br>
-		応募方法:件名を「希望の職種名 応募」とし、下記を info@one.tokyo.jp までお送りください。<br>
-		書類選考を通過した方にのみ、応募から2週間以内にメールでご連絡します。<br>
-		ポートフォリオ（ご自身のウェブサイトのURLまたはPDF）/ 履歴書 / 業務開始可能日</div>
-
-</div>
-
-<hr class="my-80">
-
-<div class="wrapper">
-	
-	<div class="container">
-		<div class="box">
-
-			<h2 class="h2" lang="en">Contact</h2>
-			<p class="mt-20 mb-40">新規プロジェクトのご相談や取材等のご依頼、<br>募集中のポジションに関するお問い合わせは、<br>下記メールアドレスまでお願いいたします。</p>
-		  	<p><a href="mailto:info@one.tokyo.jp">info@one.tokyo.jp</a></p>
-		</div>
-	</div>
-</div>
-
-  
 </section>
   
 

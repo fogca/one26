@@ -155,7 +155,8 @@
 
   .works-title {
     font-size: 48px;
-    font-weight: 300;
+    font-weight: var(--font-weight-light);
+    font-variation-settings: 'wght' var(--font-weight-light);
     line-height: 1.1;
     margin: 0 0 3rem 0;
     letter-spacing: -0.02em;
@@ -171,7 +172,8 @@
     font-size: 14px;
     color: #999;
     margin-bottom: 1rem;
-    font-weight: 300;
+    font-weight: var(--font-weight-light);
+    font-variation-settings: 'wght' var(--font-weight-light);
     cursor: pointer;
     transition: color 0.3s ease;
   }

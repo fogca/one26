@@ -42,11 +42,30 @@
 
 	let progress = $state(0);
 	let triggered = $state(false);
+	// Visibility flag — the bar is hidden (translated off below the viewport)
+	// until the user scrolls within REVEAL_THRESHOLD_PX of the page bottom,
+	// at which point it slides up. Keeps the fixed-position element from
+	// reading like a permanent footer / header on long pages.
+	let atEnd = $state(false);
+
+	// How close to the bottom the user has to get before the bar slides in.
+	const REVEAL_THRESHOLD_PX = 120;
 
 	onMount(() => {
 		if (!browser) return;
 
 		let scrollAccum = 0;
+
+		const updateAtEnd = () => {
+			const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+			atEnd = window.scrollY >= docHeight - REVEAL_THRESHOLD_PX;
+		};
+
+		// Sync once on mount in case the page loads already-scrolled (e.g. back
+		// button restoring scroll position) and listen for subsequent changes.
+		updateAtEnd();
+		window.addEventListener('scroll', updateAtEnd, { passive: true });
+		window.addEventListener('resize', updateAtEnd);
 
 		const onWheel = (e: WheelEvent) => {
 			if (triggered) return;
@@ -88,11 +107,19 @@
 
 		return () => {
 			window.removeEventListener('wheel', onWheel);
+			window.removeEventListener('scroll', updateAtEnd);
+			window.removeEventListener('resize', updateAtEnd);
 		};
 	});
 </script>
 
-<section class="np-wrapper" style:--fill-progress="{progress}%" data-next-project>
+<section
+	class="np-wrapper"
+	class:visible={atEnd}
+	style:--fill-progress="{progress}%"
+	data-next-project
+	aria-hidden={!atEnd}
+>
 	<!-- 100px-tall accent-color bar that grows L→R as the user scrolls
 	     past the page bottom. Reaches 100vw at the same moment fill = 100%
 	     (when goto fires). -->
@@ -103,14 +130,36 @@
 </section>
 
 <style>
+	/* Fixed to the viewport bottom so vigorous scroll / elastic overscroll
+	   can't reveal whatever sits below it. Hidden (translated below the
+	   viewport) until the user scrolls within REVEAL_THRESHOLD_PX of the
+	   page bottom — then `.visible` is added and it slides up. The
+	   .work-container reserves 100px of bottom padding so nothing critical
+	   is ever hidden underneath the bar when it's visible. */
 	.np-wrapper {
 		--fill-progress: 0%;
-		position: relative;
+		position: fixed;
+		left: 0;
+		right: 0;
+		bottom: 0;
 		width: 100vw;
 		height: 100px;
 		background: #ffffff;
-		z-index: 1;
+		z-index: 50;
 		overflow: hidden;
+		transform: translateY(100%);
+		pointer-events: none;
+		transition:
+			transform 0.55s cubic-bezier(0.76, 0, 0.24, 1),
+			opacity 0.35s ease;
+		opacity: 0;
+		will-change: transform;
+	}
+
+	.np-wrapper.visible {
+		transform: translateY(0);
+		pointer-events: auto;
+		opacity: 1;
 	}
 
 	.np-bar {
@@ -130,7 +179,8 @@
 		bottom: var(--padding, 25px);
 		text-decoration: none;
 		font-size: clamp(20px, 3vw, 36px);
-		font-weight: 320;
+		font-weight: var(--font-weight-light);
+		font-variation-settings: 'wght' var(--font-weight-light);
 		color: var(--key, #100088);
 		letter-spacing: 0.01em;
 		line-height: 1;

@@ -5,12 +5,21 @@
   export let text = '';
   /** When true, component is in document flow (no fixed positioning) for use in page layouts */
   export let inline = false;
+  /** Optional Japanese subtitle rendered directly below the shuffle title. Accepts HTML
+   *  (e.g. `<br>`) so callers can hand-break lines. Empty string = no subtitle. */
+  export let subtitle = '';
 
   let textElement: HTMLElement;
   let shuffleInterval: ReturnType<typeof setInterval>;
   // Canonical target text — single source of truth, decoupled from textElement.innerHTML
   // (which may be in a transient half-shuffled state when hover/reshuffle fires).
   let currentTargetText = text;
+
+  // Number of rendered lines = `<br>`-count + 1. Used to reserve a fixed
+  // min-height on the text box so the heading never re-flows mid-shuffle
+  // (which would push the subtitle up & down). Recomputed if `text` ever
+  // changes — Svelte 4 reactive statement keeps it in sync.
+  $: lineCount = (text || '').split(/<br\s*\/?\s*>/i).length || 1;
 
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ !./';
 
@@ -404,10 +413,19 @@
     the in-progress shuffle output. Result: the box never shifts even though
     proportional-width letters fluctuate during the shuffle.
   -->
-  <div class="text-content heading h1" lang="en" style="font-family: var(--heading-font);">
+  <div
+    class="text-content heading h1"
+    lang="en"
+    style:font-family="var(--heading-font)"
+    style:--shuffle-lines={lineCount}
+  >
     <span class="ghost" aria-hidden="true">{@html currentTargetText}</span>
     <span class="active" bind:this={textElement}></span>
   </div>
+
+  {#if subtitle}
+    <p class="subtitle" lang="ja">{@html subtitle}</p>
+  {/if}
 </div>
 
 <style>
@@ -433,22 +451,29 @@
 
   /* Grid stack: ghost & active occupy the same single cell, so they share
      line-height/baseline naturally without any flex/absolute baseline math.
-     Eliminates the "extra space" line-height looked too tall. */
+     Eliminates the "extra space" line-height looked too tall.
+
+     min-height reserves the full final-text height up-front (line-count
+     derived from `<br>`s in the script). Without this the box can render
+     shorter for a frame on mount in some browsers — the subtitle below
+     then jumps once the ghost's height is honoured. The 1.1em multiplier
+     matches the line-height set on .ghost / .active below. */
   .text-content {
     height: auto;
     display: grid;
     grid-template-columns: max-content;
     position: relative;
+    min-height: calc(1.1em * var(--shuffle-lines, 1));
   }
 
   .text-content .ghost,
   .text-content .active {
     grid-area: 1 / 1;
     line-height: 1.1;
-    /* ShuffleText keeps the lighter wght 320 even though the rest of the site
-       runs on 420 — the shuffle reads better at the lighter weight. */
-    font-weight: 320;
-    font-variation-settings: 'wght' 320;
+    /* ShuffleText reads better in light — pulls from the global token so a
+       single change in base.css ripples through every shuffle on the site. */
+    font-weight: var(--font-weight-light);
+    font-variation-settings: 'wght' var(--font-weight-light);
   }
 
   .text-content .ghost {
@@ -456,16 +481,41 @@
     pointer-events: none;
   }
 
+  /* Optional Japanese subtitle directly below the title. Sits as a
+     supporting line below the shuffle — sized so it reads as a clear
+     secondary line without competing with the heading. */
+  .shuffle-text .subtitle {
+    margin-top: 12px;
+    margin-bottom: 0;
+    margin-left: 0;
+    margin-right: 0;
+    max-width: 36em;
+    font-family: var(--font-jp-main, var(--font-en-main));
+    font-size: 16px;
+    line-height: 1.725;
+    font-weight: var(--font-weight-regular, 420);
+    font-variation-settings: 'wght' var(--font-weight-regular, 420);
+    letter-spacing: 0.025em;
+    color: inherit;
+    opacity: 1;
+  }
+
   @media screen and (max-width: 767px) {
     /* On mobile the shuffle title flows with the page (no fixed pinning).
-       Lets the form / content below it scroll naturally past the title. */
+       Left padding pulls the text inline with the menu / hamburger column. */
     .shuffle-text {
       position: relative;
       top: auto;
       left: auto;
       transform: none;
       z-index: auto;
-      padding: 15vh var(--padding) 0;
+      padding: 15vh 0 0 var(--padding);
+    }
+
+    /* Inline mode (slug pages) uses no padding — the parent .title-area
+       handles spacing through its own padding. */
+    .shuffle-text.inline {
+      padding: 0;
     }
 
     .text-content {

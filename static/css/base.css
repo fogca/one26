@@ -22,8 +22,9 @@
 
   --font-en-sub: "neue-haas-unica", sans-serif;
   --font-jp-main: "range-sans-variable","neue-haas-unica",TazuganeGothicStdN-Light, "TazuganeGothicStdN-Light",'Tazugane Gothic StdN Light', 'Hiragino Kaku Gothic ProN', 'ヒラギノ角ゴ Pro W3', sans-serif;
-  --font-weight-light: 320;
+  --font-weight-light: 340;
   --font-weight-regular: 420;
+  --font-weight-medium: 520;
 
   /* Spacing - Padding (desktop default) */
   --padding: 25px;
@@ -100,8 +101,8 @@ html {background-color: #ffffff;}
 :lang(ja) body,
 :lang(ja) {
   font-family: var(--font-jp-main);
-  font-weight: 400;
-  font-variation-settings: 'wght' 400;
+  font-weight: var(--font-weight-regular);
+  font-variation-settings: 'wght' var(--font-weight-regular);
 }
 
 /* ==========================================================================

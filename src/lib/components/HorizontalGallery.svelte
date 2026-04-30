@@ -39,7 +39,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
-	import gsap from 'gsap';
 
 	type Item = {
 		id: string;
@@ -59,6 +58,15 @@
 		wheelMultiplier?: number;
 		gap?: string;
 		slideHeight?: string; // image height for all viewports (default 50vh)
+		/**
+		 * When true, Lenis listens to wheel/touch on the whole window instead
+		 * of just this gallery's footprint. Use this when the page should
+		 * drive the gallery from anywhere, not only when the pointer is over
+		 * the slides. Wheel input from outside and inside the gallery then
+		 * runs through exactly the same code path, so the feel is identical
+		 * across the whole page.
+		 */
+		globalWheel?: boolean;
 	};
 
 	// Defaults are tuned so multiple slides remain clearly visible across
@@ -83,12 +91,17 @@
 		viewportThreshold = 1,
 		wheelMultiplier = 1,
 		gap = '5px',
-		slideHeight = '40vh'
+		slideHeight = '40vh',
+		globalWheel = false
 	}: Props = $props();
 
 	let wrapperEl: HTMLDivElement | null = $state(null);
 	let trackEl: HTMLDivElement | null = $state(null);
 	let ready = $state(false); // toggles the clipRevealUp50 staggered intro
+	// Hoisted to component scope so the exported forwardScroll() helper
+	// (callable from outside via bind:this) can reach the same instance.
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	let lenisInstance: any = $state(null);
 
 	onMount(() => {
 		if (!browser || !wrapperEl || !trackEl) return;
@@ -102,10 +115,10 @@
 		const wrapper = wrapperEl;
 		const track = trackEl;
 
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		let lenisInstance: any = null;
 		let rafId: number | null = null;
 		let scheduled = false;
+		// Set when globalWheel is on — captured so the cleanup can remove it.
+		let onGlobalWheel: ((e: WheelEvent) => void) | null = null;
 
 		const update = () => {
 			scheduled = false;
@@ -154,13 +167,15 @@
 					const origin =
 						distNorm > 0 ? 'left center' : distNorm < 0 ? 'right center' : 'center center';
 
-					gsap.set(slide, {
-						'--slide-scale': scale,
-						'--slide-opacity': opacity,
-						'--image-x': `${parallax}rem`,
-						'--slide-origin': origin,
-						force3D: true
-					});
+					// Direct DOM writes are noticeably cheaper than gsap.set when
+					// run for every slide on every scroll frame — GSAP's wrapper
+					// re-parses each property and walks its plugin chain. CSS
+					// custom properties only need setProperty.
+					const s = slide.style;
+					s.setProperty('--slide-scale', String(scale));
+					s.setProperty('--slide-opacity', String(opacity));
+					s.setProperty('--image-x', `${parallax}rem`);
+					s.setProperty('--slide-origin', origin);
 				}
 			});
 		};
@@ -249,12 +264,39 @@
 			// First-frame layout pass
 			update();
 			window.addEventListener('resize', onResize);
+
+			// When globalWheel is on, capture wheel events anywhere on the page
+			// and re-dispatch them onto the gallery wrapper. Lenis already has a
+			// `wheel` listener attached to wrapper — by re-firing the same event
+			// there we go through Lenis's exact internal pipeline (no scrollTo
+			// tween, no second smoothing layer), so wheel from inside vs outside
+			// the gallery feel identical. Skip if the original event already
+			// originated inside the wrapper (Lenis would handle it directly).
+			if (globalWheel) {
+				onGlobalWheel = (e: WheelEvent) => {
+					if (wrapper.contains(e.target as Node)) return;
+					e.preventDefault();
+					wrapper.dispatchEvent(
+						new WheelEvent('wheel', {
+							deltaX: e.deltaX,
+							deltaY: e.deltaY,
+							deltaZ: e.deltaZ,
+							deltaMode: e.deltaMode,
+							bubbles: true,
+							cancelable: true
+						})
+					);
+				};
+				window.addEventListener('wheel', onGlobalWheel, { passive: false });
+			}
 		});
 
 		return () => {
 			if (rafId !== null) cancelAnimationFrame(rafId);
 			lenisInstance?.destroy();
+			lenisInstance = null;
 			window.removeEventListener('resize', onResize);
+			if (onGlobalWheel) window.removeEventListener('wheel', onGlobalWheel);
 		};
 	});
 </script>

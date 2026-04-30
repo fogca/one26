@@ -19,7 +19,7 @@
 	// Nav order for directional page transitions (klsr-style left/right slide).
 	// Pages later in this array slide IN from the left when entered (right-direction motion);
 	// earlier pages slide IN from the right (left-direction motion).
-	const NAV_ORDER = ['/', '/works', '/office', '/contact'];
+	const NAV_ORDER = ['/', '/works', '/office', '/jobs', '/contact'];
 
 	// ── Stock-aligned timing (mirrors Stock/animation/PageTransition.svelte) ──
 	const OUT_DURATION = 1.0;            // s — base duration for shrink + darken
@@ -50,15 +50,27 @@
 		return { x: dir === 'right' ? '-100%' : '100%', y: '0%' };
 	}
 
-	// True when the destination is a /works/[slug] detail page (not /works
-	// itself nor /works/list). Slug nav uses an UP-direction panel.
-	function isToSlug(pathname: string | undefined | null): boolean {
+	// True when the path is a /works/[slug] detail page (not /works itself
+	// nor /works/list). Used both for "going INTO a slug" (up direction) and
+	// "leaving a slug" (also up direction — slug is conceptually a deeper
+	// layer, so escaping it always rises).
+	function isSlugPath(pathname: string | undefined | null): boolean {
 		if (!pathname) return false;
 		return (
 			pathname.startsWith('/works/') &&
 			pathname !== '/works' &&
 			pathname !== '/works/list'
 		);
+	}
+
+	// Panel color matches the DESTINATION page's background, so the panel
+	// slides in IN the new page's color rather than flashing white → black/blue
+	// on reveal. Pages keep their own page-bg via body.page-* classes.
+	function panelColorFor(pathname: string | undefined | null): string {
+		if (!pathname) return '#ffffff';
+		if (pathname === '/contact') return 'var(--key, #100088)';
+		if (pathname === '/jobs') return '#000000';
+		return '#ffffff';
 	}
 
 	// ── Outgoing animation: shrink + darken + panel slide-in (direction-aware) ──
@@ -73,18 +85,29 @@
 
 		needsEntryAnim = true;
 
+		// Defensive: wipe any inline state left on .page-wrapper / header /
+		// .page-content by a previous incomplete cycle. Without this, residual
+		// transforms or filters can keep the layer composited and swallow the
+		// first wheel/touch event on the new page.
+		gsap.set(['.page-wrapper', 'header', '.page-content'], { clearProps: 'all' });
+
 		// Determine motion direction.
 		//   • Going INTO a slug page (/works/[slug]) → always UP, regardless
 		//     of where the user came from.
+		//   • Going OUT of a slug page → also UP. The slug pages are a
+		//     conceptually deeper layer, so escaping them always rises
+		//     (slug→slug stays up too via the rule above).
 		//   • Otherwise → left/right based on NAV_ORDER position.
 		const toPath = navigation.to?.url.pathname ?? '';
-		const fromIdx = NAV_ORDER.indexOf(navigation.from.url.pathname);
+		const fromPath = navigation.from.url.pathname;
+		const fromIdx = NAV_ORDER.indexOf(fromPath);
 		const toIdx = NAV_ORDER.indexOf(toPath);
-		const direction: 'left' | 'right' | 'up' = isToSlug(toPath)
-			? 'up'
-			: fromIdx >= 0 && toIdx >= 0 && toIdx < fromIdx
-				? 'left'
-				: 'right';
+		const direction: 'left' | 'right' | 'up' =
+			isSlugPath(toPath) || isSlugPath(fromPath)
+				? 'up'
+				: fromIdx >= 0 && toIdx >= 0 && toIdx < fromIdx
+					? 'left'
+					: 'right';
 		lastDirection = direction;
 
 		// Lock the shrink to the visible-viewport rectangle (not the full page).
@@ -93,24 +116,36 @@
 		//    the current viewport so the wrapper visually behaves like a viewport-sized
 		//    panel. Browser clips natively (works for images/videos without any
 		//    slicing/snapshotting).
+		//
+		// Rounding everything to integer pixels avoids a subtle bug where
+		// browsers report subpixel scroll positions (e.g. rect.top = -0.5px).
+		// Even fractional drift in the origin makes the shrink feel "off-center",
+		// which on tall pages (e.g. /works archives) reads as the source page
+		// floating slightly DOWN during the scale. Integer values keep the
+		// origin glued to the viewport's true vertical centre.
 		const wrapper = document.querySelector<HTMLElement>('.page-wrapper');
 		if (wrapper) {
 			const rect = wrapper.getBoundingClientRect();
-			const vh = window.innerHeight;
-			const originY = vh / 2 - rect.top;
-			const topInset = Math.max(0, -rect.top); // hidden above viewport
-			const bottomInset = Math.max(0, rect.height - topInset - vh); // hidden below viewport
+			const vh = Math.round(window.innerHeight);
+			const rectTop = Math.round(rect.top);
+			const rectHeight = Math.round(rect.height);
+			const originY = Math.round(vh / 2 - rectTop);
+			const topInset = Math.max(0, -rectTop); // hidden above viewport
+			const bottomInset = Math.max(0, rectHeight - topInset - vh); // hidden below viewport
 			gsap.set(wrapper, {
 				transformOrigin: `50% ${originY}px`,
 				clipPath: `inset(${topInset}px 0px ${bottomInset}px 0px)`
 			});
 		}
 
-		// Pre-position the panel offstage based on direction.
-		//   • 'right'  → panel offstage to the RIGHT  (slides in left-ward)
-		//   • 'left'   → panel offstage to the LEFT   (slides in right-ward)
-		//   • 'up'     → panel offstage BELOW         (slides in upward, slug nav)
-		gsap.set('.transition-panel', panelOffstage(direction));
+		// Panel always starts WHITE. After it slides in to cover the screen,
+		// we tween its background to the destination page's color so the
+		// transition fades smoothly from white → new-page-color while the
+		// panel still covers the viewport.
+		gsap.set('.transition-panel', {
+			...panelOffstage(direction),
+			backgroundColor: '#ffffff'
+		});
 
 		return new Promise<void>((resolve) => {
 			const tl = gsap.timeline({
@@ -162,6 +197,23 @@
 				},
 				OUT_DURATION * PANEL_DELAY_RATIO
 			);
+
+			// Once the white panel has fully covered the screen, fade its
+			// background to the destination page's color. This creates the
+			// "white pane → fades into the next page's color" handoff before
+			// the panel slides out and reveals the new content.
+			const destColor = panelColorFor(toPath);
+			if (destColor !== '#ffffff') {
+				tl.to(
+					'.transition-panel',
+					{
+						backgroundColor: destColor,
+						duration: 0.5,
+						ease: 'power2.inOut'
+					},
+					'>'
+				);
+			}
 		});
 	});
 
@@ -187,6 +239,17 @@
 		gsap.set('.darken-overlay', { opacity: 0 });
 		gsap.set('header', { opacity: 0 });
 		gsap.set('.page-content', { opacity: 0 });
+
+		// IMMEDIATELY wipe the previous page's title from the shuffle's active
+		// span so when the panel later slides off, the user doesn't see the
+		// OLD title flash for a frame before the new shuffle kicks in. The
+		// panel still covers the viewport at this point, so the wipe itself
+		// is invisible. setRandom() also updates the ghost (which reserves
+		// width) to the destination text so the box is the right size when
+		// the shuffle starts.
+		if (showShuffle && shuffleTextComponent && newConfig.text) {
+			shuffleTextComponent.setRandom(newConfig.text);
+		}
 
 		// Hold the reveal until FontPlus has applied the subset for this page —
 		// otherwise the user sees the new copy in the fallback font and watches
@@ -258,6 +321,7 @@
 			'page-home',
 			'page-works',
 			'page-office',
+			'page-jobs',
 			'page-works-detail',
 			'page-contact'
 		);
@@ -268,6 +332,8 @@
 			body.classList.add('page-works');
 		} else if (pathname === '/office') {
 			body.classList.add('page-office');
+		} else if (pathname === '/jobs') {
+			body.classList.add('page-jobs');
 		} else if (pathname === '/contact') {
 			body.classList.add('page-contact');
 		} else if (pathname.startsWith('/works/')) {
@@ -276,24 +342,37 @@
 	});
 
 	// ページごとのテキスト定義
-	function getPageText(pathname: string): { text: string; enableHover: boolean } {
+	// `subtitle` is the optional Japanese supporting line rendered below the
+	// shuffle title. Leave the field out (or empty) on pages that don't need it.
+	function getPageText(pathname: string): {
+		text: string;
+		enableHover: boolean;
+		subtitle?: string;
+	} {
 		if (pathname === '/') {
-			return { text: '', enableHover: true };
+			return { text: '', enableHover: true, subtitle: '' };
 		} else if (pathname === '/works/list') {
-			return { text: 'Work<br>Archives / List', enableHover: false };
+			return { text: 'Work<br>Archives / List', enableHover: false, subtitle: '' };
 		} else if (pathname === '/works') {
-			return { text: 'Work<br>Archives', enableHover: false };
+			return { text: 'Work<br>Archives', enableHover: false, subtitle: '' };
 		} else if (pathname === '/office') {
-			return { text: 'Studio &<br>Recruitment', enableHover: false };
+			return { text: 'About<br>one inc.', enableHover: false, subtitle: '' };
+		} else if (pathname === '/jobs') {
+			return {
+				text: "We're growing.<br>Bring your obsessions.",
+				enableHover: false,
+				subtitle: ''
+			};
 		} else if (pathname === '/contact') {
 			return {
 				text: "get in touch<br>and let's make<br>something fun together",
-				enableHover: false
+				enableHover: false,
+				subtitle: ''
 			};
 		} else if (pathname.startsWith('/works/')) {
-			return { text: '', enableHover: false };
+			return { text: '', enableHover: false, subtitle: '' };
 		}
-		return { text: '', enableHover: false };
+		return { text: '', enableHover: false, subtitle: '' };
 	}
 
 	// Shuffle reveal is now driven entirely by afterNavigate (fade-in onComplete)
@@ -304,7 +383,7 @@
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
-	<link rel="stylesheet" href="../css/base.css?var=1.02" />
+	<link rel="stylesheet" href="../css/base.css?var=1.03" />
 	<link rel="stylesheet" href="../css/rendering.css?var=1.00" />
 	<link rel="stylesheet" href="https://use.typekit.net/iqk5bse.css" />
 </svelte:head>
@@ -324,6 +403,7 @@
 			<ShuffleText
 				bind:this={shuffleTextComponent}
 				text={getPageText($page.url.pathname).text}
+				subtitle={getPageText($page.url.pathname).subtitle ?? ''}
 			/>
 		{/if}
 
@@ -353,7 +433,8 @@
 		background: var(--page-bg);
 		color: var(--key, #100088);
 		font-family: 'Helvetica Neue', 'Helvetica', Arial, sans-serif;
-		font-weight: 300;
+		font-weight: var(--font-weight-light);
+		font-variation-settings: 'wght' var(--font-weight-light);
 	}
 
 	/* The "behind" color exposed during scale-down — accent color */
@@ -396,7 +477,33 @@
 		transform: translateX(-100%);
 		z-index: 1000;
 		pointer-events: none;
-		will-change: transform;
+		/* NO `will-change: transform` here. A permanently-promoted full-viewport
+		   compositor layer can intercept the first wheel/touch event after a
+		   transition on macOS/iOS Safari, which produced a "first scroll attempt
+		   does nothing, second one works" bug. GSAP applies will-change for the
+		   duration of each tween automatically — that's enough. */
+	}
+
+	/* Jobs page — black background with white text. */
+	:global(body.page-jobs) {
+		--page-bg: #000000;
+		color: #ffffff;
+	}
+	:global(body.page-jobs header),
+	:global(body.page-jobs header a),
+	:global(body.page-jobs .shuffle-text),
+	:global(body.page-jobs .shuffle-text *) {
+		color: #ffffff;
+	}
+	:global(body.page-jobs footer) {
+		background-color: #000000;
+		color: #ffffff;
+	}
+	:global(body.page-jobs footer hr) {
+		background-color: #ffffff;
+	}
+	:global(body.page-jobs footer svg) {
+		color: #ffffff;
 	}
 
 	/* Contact page — all text (including Header & ShuffleText) goes white,

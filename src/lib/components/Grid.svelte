@@ -374,7 +374,8 @@
   
     .text-content {
       font-size: 64px;
-      font-weight: 200;
+      font-weight: var(--font-weight-light);
+      font-variation-settings: 'wght' var(--font-weight-light);
       line-height: 1.05;
       max-width: 1100px;
       min-height: 173px;
@@ -499,7 +500,8 @@
   
     .product-title {
       font-size: 32px;
-      font-weight: 500;
+      font-weight: var(--font-weight-medium);
+      font-variation-settings: 'wght' var(--font-weight-medium);
     }
   
     @media (max-width: 1200px) {

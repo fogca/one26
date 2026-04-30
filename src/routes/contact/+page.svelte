@@ -305,7 +305,8 @@
 
 	.row label {
 		font-size: 13px;
-		font-weight: 320;
+		font-weight: var(--font-weight-light);
+		font-variation-settings: 'wght' var(--font-weight-light);
 		color: var(--white);
 	}
 
@@ -319,7 +320,8 @@
 		color: var(--white);
 		font-size: 14px;
 		font-family: inherit;
-		font-weight: 320;
+		font-weight: var(--font-weight-light);
+		font-variation-settings: 'wght' var(--font-weight-light);
 		width: 100%;
 		padding: 0;
 	}
@@ -474,7 +476,8 @@
 		border: none;
 		padding: 16px 48px;
 		font-size: 14px;
-		font-weight: 420;
+		font-weight: var(--font-weight-regular);
+		font-variation-settings: 'wght' var(--font-weight-regular);
 		font-family: inherit;
 		cursor: pointer;
 		margin-top: 32px;
