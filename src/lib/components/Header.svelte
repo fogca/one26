@@ -75,12 +75,12 @@
 			Instagram
 		</a>
 		<a
-			href="https://www.one.tokyo.jp"
+			href="https://one.tokyo.jp"
 			target="_blank"
 			rel="noopener noreferrer"
 			class="drawer-meta-link"
 		>
-			www.one.tokyo.jp
+			one.tokyo.jp
 		</a>
 	</div>
 </div>

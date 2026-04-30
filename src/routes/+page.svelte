@@ -58,7 +58,21 @@
 </script>
 
 <svelte:head>
-	<title>Kazuki Kaneko / one inc.</title>
+	<title>Kazuki Kaneko | one inc.</title>
+	<meta
+		name="description"
+		content="時代に流されることのない普遍性と、未来を切り拓く革新性が共存するヴィジュアルコミュニケーションを、創造し続けます。"
+	/>
+	<meta property="og:title" content="Kazuki Kaneko | one inc." />
+	<meta
+		property="og:description"
+		content="時代に流されることのない普遍性と、未来を切り拓く革新性が共存するヴィジュアルコミュニケーションを、創造し続けます。"
+	/>
+	<meta name="twitter:title" content="Kazuki Kaneko | one inc." />
+	<meta
+		name="twitter:description"
+		content="時代に流されることのない普遍性と、未来を切り拓く革新性が共存するヴィジュアルコミュニケーションを、創造し続けます。"
+	/>
 </svelte:head>
 
 <main class="top-page">

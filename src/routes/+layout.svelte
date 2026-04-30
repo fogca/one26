@@ -4,6 +4,7 @@
 	import gsap from 'gsap';
 	import { CustomEase } from 'gsap/CustomEase';
 	import favicon from '$lib/assets/favicon.png';
+	import ogpImage from '$lib/assets/ogp.png';
 	import Color from '$lib/components/Color.svelte';
 	import CustomCursor from '$lib/components/CustomCursor.svelte';
 	import Header from '$lib/components/Header.svelte';
@@ -379,6 +380,20 @@
 	// so it fires once the page is solidly visible — eliminates the inconsistent
 	// "didn't see the shuffle" cases that happened when the trigger ran during
 	// the early/invisible part of the fade-in.
+
+	// ── Site-wide canonical / OGP defaults ────────────────────────────────
+	// Each `+page.svelte` can still override <title> / og:image / description
+	// via its own <svelte:head>. The layout fills in canonical, og:url and a
+	// fallback og:image so every route ships with a valid share preview.
+	const SITE_ORIGIN = 'https://one.tokyo.jp';
+	// Vite hashes the imported asset → resolves to `/_app/immutable/...png` at
+	// build time. Prefixing the site origin gives crawlers an absolute URL
+	// (Open Graph requires absolute URLs to fetch the preview image).
+	const DEFAULT_OG_IMAGE = `${SITE_ORIGIN}${ogpImage}`;
+
+	// `$derived` so canonical / og:url track the current pathname during SPA
+	// navigations (svelte:head re-renders, search bots see the right URL).
+	let canonicalUrl = $derived(SITE_ORIGIN + $page.url.pathname);
 </script>
 
 <svelte:head>
@@ -386,6 +401,14 @@
 	<link rel="stylesheet" href="../css/base.css?var=1.03" />
 	<link rel="stylesheet" href="../css/rendering.css?var=1.00" />
 	<link rel="stylesheet" href="https://use.typekit.net/iqk5bse.css" />
+
+	<!-- Canonical / Open Graph / Twitter — per-route URL, default image.
+	     Pages that need a different image override og:image / twitter:image
+	     in their own <svelte:head>. -->
+	<link rel="canonical" href={canonicalUrl} />
+	<meta property="og:url" content={canonicalUrl} />
+	<meta property="og:image" content={DEFAULT_OG_IMAGE} />
+	<meta name="twitter:image" content={DEFAULT_OG_IMAGE} />
 </svelte:head>
 
 <!-- Picks a random accent color (--key) per page load and updates favicon -->

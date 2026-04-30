@@ -12,7 +12,21 @@
 </script>
 
 <svelte:head>
-  <title>Project List | Kazuki Kaneko / one inc.</title>
+  <title>Project List | one inc.</title>
+  <meta
+    name="description"
+    content="one inc. の手掛けたプロジェクトをリスト形式で。タイトル・カテゴリーから案件を辿れます。"
+  />
+  <meta property="og:title" content="Project List | one inc." />
+  <meta
+    property="og:description"
+    content="one inc. の手掛けたプロジェクトをリスト形式で。タイトル・カテゴリーから案件を辿れます。"
+  />
+  <meta name="twitter:title" content="Project List | one inc." />
+  <meta
+    name="twitter:description"
+    content="one inc. の手掛けたプロジェクトをリスト形式で。タイトル・カテゴリーから案件を辿れます。"
+  />
 </svelte:head>
 
 <section class="works-list">

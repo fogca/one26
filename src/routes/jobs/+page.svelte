@@ -2,7 +2,21 @@
 </script>
 
 <svelte:head>
-	<title>Jobs - Kazuki Kaneko / one inc.</title>
+	<title>Jobs | one inc.</title>
+	<meta
+		name="description"
+		content="one inc. はデザイナー・マネージャー職を募集中。ヴィジュアルコミュニケーションを通してブランドの本質を形にするチームに、新しいメンバーをお迎えします。"
+	/>
+	<meta property="og:title" content="Jobs | one inc." />
+	<meta
+		property="og:description"
+		content="one inc. はデザイナー・マネージャー職を募集中。ヴィジュアルコミュニケーションを通してブランドの本質を形にするチームに、新しいメンバーをお迎えします。"
+	/>
+	<meta name="twitter:title" content="Jobs | one inc." />
+	<meta
+		name="twitter:description"
+		content="one inc. はデザイナー・マネージャー職を募集中。ヴィジュアルコミュニケーションを通してブランドの本質を形にするチームに、新しいメンバーをお迎えします。"
+	/>
 </svelte:head>
 
 <section class="Jobs">

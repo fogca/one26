@@ -115,7 +115,21 @@
 </script>
 
 <svelte:head>
-	<title>Contact / one inc.</title>
+	<title>Contact | one inc.</title>
+	<meta
+		name="description"
+		content="one inc. へのお問い合わせ。プロジェクトのご相談、コラボレーション、採用など、お気軽にご連絡ください。"
+	/>
+	<meta property="og:title" content="Contact | one inc." />
+	<meta
+		property="og:description"
+		content="one inc. へのお問い合わせ。プロジェクトのご相談、コラボレーション、採用など、お気軽にご連絡ください。"
+	/>
+	<meta name="twitter:title" content="Contact | one inc." />
+	<meta
+		name="twitter:description"
+		content="one inc. へのお問い合わせ。プロジェクトのご相談、コラボレーション、採用など、お気軽にご連絡ください。"
+	/>
 </svelte:head>
 
 <main class="contact">

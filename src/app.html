@@ -4,6 +4,34 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 
+		<!--
+			Static head defaults. Page-specific overrides (title / description /
+			og:image) are injected per-route via <svelte:head> in the layout
+			and individual +page.svelte files.
+
+			The accent-color system swaps both the SVG favicon and theme-color
+			at runtime in Color.svelte — the values below are first-paint
+			defaults (the common blue accent) so SSR isn't flash-of-white.
+		-->
+		<meta
+			name="description"
+			content="時代に流されることのない普遍性と、未来を切り拓く革新性が共存するヴィジュアルコミュニケーションを、創造し続けます。"
+		/>
+		<meta name="theme-color" content="#100088" />
+		<meta name="format-detection" content="telephone=no" />
+
+		<!-- Open Graph / Facebook / LINE -->
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content="one inc." />
+		<meta property="og:locale" content="ja_JP" />
+		<meta
+			property="og:description"
+			content="時代に流されることのない普遍性と、未来を切り拓く革新性が共存するヴィジュアルコミュニケーションを、創造し続けます。"
+		/>
+
+		<!-- Twitter / X (cards still render even though one inc. has no handle) -->
+		<meta name="twitter:card" content="summary_large_image" />
+
 		<!-- FOUT guard for the very first paint: keep the body invisible until
 		     FontPlus signals the subset has rendered. Capped at 1500 ms so a
 		     blocked/slow font request can never lock the page. -->

@@ -49,5 +49,17 @@
 		}
 		link.type = 'image/svg+xml';
 		link.href = href;
+
+		// 3. Sync mobile browser chrome (Safari address bar / Android Chrome)
+		//    to the same accent. SSR ships with a default blue value so first
+		//    paint isn't flash-of-white — this swap only kicks in on the rare
+		//    orange visit.
+		let themeMeta = document.querySelector<HTMLMetaElement>("meta[name='theme-color']");
+		if (!themeMeta) {
+			themeMeta = document.createElement('meta');
+			themeMeta.name = 'theme-color';
+			document.head.appendChild(themeMeta);
+		}
+		themeMeta.content = color;
 	});
 </script>

@@ -20,9 +20,18 @@
 </script>
 
 <svelte:head>
-	<title>{work.title} - Kazuki Kaneko / one inc.</title>
+	<title>{work.title} | one inc.</title>
 	{#if work.description}
-	  <meta name="description" content={work.description} />
+		<meta name="description" content={work.description} />
+		<meta property="og:description" content={work.description} />
+		<meta name="twitter:description" content={work.description} />
+	{/if}
+	<meta property="og:title" content="{work.title} | one inc." />
+	<meta name="twitter:title" content="{work.title} | one inc." />
+	{#if work.thumbnail?.url}
+		<!-- Per-project share preview overrides the layout's default OGP image. -->
+		<meta property="og:image" content={work.thumbnail.url} />
+		<meta name="twitter:image" content={work.thumbnail.url} />
 	{/if}
 </svelte:head>
 

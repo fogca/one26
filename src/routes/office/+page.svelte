@@ -2,7 +2,21 @@
 </script>
   
   <svelte:head>
-	<title>Office - Kazuki Kaneko / one inc.</title>
+	<title>About | one inc.</title>
+	<meta
+		name="description"
+		content="one inc. はヴィジュアルコミュニケーションを軸にしたクリエイティブスタジオ。ブランド戦略・アイデンティティ・グラフィック・デジタル領域までを一貫した視点で設計します。"
+	/>
+	<meta property="og:title" content="About | one inc." />
+	<meta
+		property="og:description"
+		content="one inc. はヴィジュアルコミュニケーションを軸にしたクリエイティブスタジオ。ブランド戦略・アイデンティティ・グラフィック・デジタル領域までを一貫した視点で設計します。"
+	/>
+	<meta name="twitter:title" content="About | one inc." />
+	<meta
+		name="twitter:description"
+		content="one inc. はヴィジュアルコミュニケーションを軸にしたクリエイティブスタジオ。ブランド戦略・アイデンティティ・グラフィック・デジタル領域までを一貫した視点で設計します。"
+	/>
   </svelte:head>
   
 <section class="Office">

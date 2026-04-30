@@ -170,7 +170,21 @@
 </script>
 
 <svelte:head>
-  <title>Works | Kazuki Kaneko / one inc.</title>
+  <title>Works | one inc.</title>
+  <meta
+    name="description"
+    content="one inc. が手掛けたブランドデザイン、ヴィジュアルアイデンティティ、グラフィック、Web 制作のプロジェクトアーカイブ。"
+  />
+  <meta property="og:title" content="Works | one inc." />
+  <meta
+    property="og:description"
+    content="one inc. が手掛けたブランドデザイン、ヴィジュアルアイデンティティ、グラフィック、Web 制作のプロジェクトアーカイブ。"
+  />
+  <meta name="twitter:title" content="Works | one inc." />
+  <meta
+    name="twitter:description"
+    content="one inc. が手掛けたブランドデザイン、ヴィジュアルアイデンティティ、グラフィック、Web 制作のプロジェクトアーカイブ。"
+  />
 </svelte:head>
 
 <main class="works-page">
