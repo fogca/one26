@@ -1,24 +1,26 @@
 import type { PageServerLoad } from './$types';
-import { getList } from '$lib/js/microcms';
+import { getList, getPage } from '$lib/js/microcms';
 
 export const load: PageServerLoad = async () => {
   try {
-    // microCMSから全作品を取得（thumbnail、repeat、repeatImgを含む）
-    const response = await getList({
-      limit: 100, // 全件取得
-      fields: ['id', 'title', 'thumbnail', 'repeat', 'repeatImg', 'category']
-    });
-
-    // サムネイルがある作品のみフィルタリング
-    const worksWithThumbnail = response.contents.filter(work => work.thumbnail);
+    // works と pages を並列取得（home は両方使う）
+    const [worksRes, page] = await Promise.all([
+      getList({
+        limit: 100,
+        fields: ['id', 'title', 'thumbnail', 'repeat', 'repeatImg', 'category']
+      }),
+      getPage()
+    ]);
 
     return {
-      works: worksWithThumbnail
+      works: worksRes.contents.filter((work) => work.thumbnail),
+      page
     };
   } catch (error) {
-    console.error('Failed to fetch works from microCMS:', error);
+    console.error('Failed to fetch from microCMS:', error);
     return {
-      works: []
+      works: [],
+      page: null
     };
   }
 };

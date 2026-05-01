@@ -11,16 +11,16 @@
 	let revealStep = $state(0); // 0: hidden, 1: "We bring…", 2: also "Welcome:)", 3: show gallery
 	let works = $derived(data.works || []);
 
-	// Hero copy. Same 3-line break across desktop and mobile so the layout
-	// stays consistent and word wrap can't shift the line during the shuffle.
-	const heroText =
+	// Hero copy / Japanese subtitle come from microCMS `pages`. Hardcoded
+	// fallbacks keep the page rendering even if the CMS is unreachable
+	// (server load returns page: null on error).
+	const FALLBACK_HERO_COPY =
 		"We bring an inventive<br>perspective to every project<br>with our ideas and passion.";
-
-	// Japanese supporting copy rendered directly below the hero shuffle.
-	// `<br class="sp">` only line-breaks on mobile (sp = smartphone) thanks
-	// to base.css's .sp / .pc visibility rules; `<br>` always breaks.
-	const heroSubtitle =
+	const FALLBACK_HERO_SUBTITLE =
 		'時代に流されることのない普遍性と、<br class="sp">未来を切り拓く革新性が共存する<br>ヴィジュアルコミュニケーションを、<br class="sp">創造し続けます。';
+
+	let heroText = $derived(data.page?.hero_copy?.trim() || FALLBACK_HERO_COPY);
+	let heroSubtitle = $derived(data.page?.hero_subtitle?.trim() || FALLBACK_HERO_SUBTITLE);
 
 	// Map microCMS works → HorizontalGallery's item shape.
 	let galleryItems = $derived(

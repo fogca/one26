@@ -1,0 +1,56 @@
+{
+  "apiFields": [
+    {
+      "fieldId": "order",
+      "name": "Order",
+      "kind": "number",
+      "required": false,
+      "description": "26 表示順（小さい数字が上）"
+    },
+    {
+      "fieldId": "slug",
+      "name": "Slug",
+      "kind": "text",
+      "required": true,
+      "isUnique": true,
+      "description": "26 アンカーリンク用 ID（例: graphic-designer）"
+    },
+    {
+      "fieldId": "title_en",
+      "name": "Title (EN)",
+      "kind": "text",
+      "required": true,
+      "isUnique": false,
+      "description": "26 英語タイトル（例: Graphic Designer）"
+    },
+    {
+      "fieldId": "duties",
+      "name": "業務内容",
+      "kind": "textArea",
+      "required": true,
+      "description": "26 業務内容（1行1項目、改行区切り）"
+    },
+    {
+      "fieldId": "ideal_candidate",
+      "name": "求める人物像",
+      "kind": "textArea",
+      "required": true,
+      "description": "26 求める人物像（改行区切り）"
+    },
+    {
+      "fieldId": "preferred_skills",
+      "name": "歓迎スキル",
+      "kind": "textArea",
+      "required": false,
+      "description": "26 歓迎スキル（改行区切り、任意。空ならセクション非表示）"
+    },
+    {
+      "fieldId": "conditions",
+      "name": "条件",
+      "kind": "textArea",
+      "required": true,
+      "description": "26 雇用形態 / 給与 / 勤務地 / 応募締切（改行区切り）"
+    }
+  ],
+  "customFields": []
+}

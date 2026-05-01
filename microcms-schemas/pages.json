@@ -1,0 +1,137 @@
+{
+  "apiFields": [
+    {
+      "fieldId": "hero_copy",
+      "name": "01. Top — Hero コピー",
+      "kind": "textArea",
+      "required": true,
+      "description": "26 トップ ヒーロー英語コピー（<br>で改行可）"
+    },
+    {
+      "fieldId": "hero_subtitle",
+      "name": "02. Top — Hero サブ",
+      "kind": "textArea",
+      "required": false,
+      "description": "26 トップ ヒーロー下の日本語サポート文（<br class=\"sp\"> や <br> 可）"
+    },
+    {
+      "fieldId": "about_intro_title",
+      "name": "03. About — タイトル",
+      "kind": "text",
+      "required": true,
+      "isUnique": false,
+      "description": "26 About セクション1 タイトル(英語)"
+    },
+    {
+      "fieldId": "about_intro_body",
+      "name": "04. About — 本文",
+      "kind": "textArea",
+      "required": true,
+      "description": "26 About セクション1 本文(日本語)"
+    },
+    {
+      "fieldId": "about_intro_body_en",
+      "name": "05. About — 本文 EN",
+      "kind": "textArea",
+      "required": false,
+      "description": "26 About セクション1 英訳(display:none 表示用 / 将来 i18n)"
+    },
+    {
+      "fieldId": "services_title",
+      "name": "06. Services — タイトル",
+      "kind": "text",
+      "required": true,
+      "isUnique": false,
+      "description": "26 About サービス節 タイトル(\"Services\")"
+    },
+    {
+      "fieldId": "services_intro",
+      "name": "07. Services — 説明",
+      "kind": "textArea",
+      "required": true,
+      "description": "26 About サービス節 説明文(日本語)"
+    },
+    {
+      "fieldId": "service_groups",
+      "name": "08. Services — グループ",
+      "kind": "repeater",
+      "required": false,
+      "customFieldCreatedAtList": ["2026-04-30T12:00:00.000Z"],
+      "description": "26 About サービス節 4グループ(追加・削除・並べ替え自由)"
+    },
+    {
+      "fieldId": "top_tagline",
+      "name": "91. [旧] Top Tagline",
+      "kind": "richEditor",
+      "required": false
+    },
+    {
+      "fieldId": "top_jap",
+      "name": "92. [旧] Top Japanese",
+      "kind": "textArea",
+      "required": false
+    },
+    {
+      "fieldId": "top_eng",
+      "name": "93. [旧] Top English",
+      "kind": "textArea",
+      "required": false
+    },
+    {
+      "fieldId": "studio_jap",
+      "name": "94. [旧] Studio Japanese",
+      "kind": "richEditor",
+      "required": false
+    },
+    {
+      "fieldId": "studio_eng",
+      "name": "95. [旧] Studio English",
+      "kind": "textArea",
+      "required": false
+    },
+    {
+      "fieldId": "philosophy_title_eng",
+      "name": "96. [旧] Philosophy Title",
+      "kind": "text",
+      "required": false,
+      "isUnique": false
+    },
+    {
+      "fieldId": "philosophy",
+      "name": "97. [旧] Philosophy Contents",
+      "kind": "textArea",
+      "required": false
+    }
+  ],
+  "customFields": [
+    {
+      "createdAt": "2026-04-30T12:00:00.000Z",
+      "updatedAt": "2026-04-30T12:00:00.000Z",
+      "fieldId": "service_group",
+      "name": "Service Group",
+      "fields": [
+        {
+          "idValue": "groupTitle01",
+          "fieldId": "group_title",
+          "name": "グループ名",
+          "kind": "text",
+          "required": true,
+          "isUnique": false,
+          "description": "26 グループ英語名(例: Brand Foundation)"
+        },
+        {
+          "idValue": "groupItems01",
+          "fieldId": "group_items",
+          "name": "項目（改行区切り）",
+          "kind": "textArea",
+          "required": true,
+          "description": "26 1行=1項目で列挙"
+        }
+      ],
+      "position": [
+        ["groupTitle01", "groupItems01"],
+        []
+      ]
+    }
+  ]
+}

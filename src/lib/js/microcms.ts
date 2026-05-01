@@ -59,3 +59,80 @@ export const getDetail = async (
     queries,
   });
 };
+
+// ─── Jobs ──────────────────────────────────────────────────────────────────
+// All textArea fields are stored as newline-separated plain text — the page
+// component splits them into <li> or <br> on render.
+
+export type Job = {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string;
+  revisedAt: string;
+  slug: string;
+  title_en: string;
+  duties: string;
+  ideal_candidate: string;
+  preferred_skills: string;
+  conditions: string;
+};
+
+export type JobResponse = {
+  totalCount: number;
+  offset: number;
+  limit: number;
+  contents: Job[];
+};
+
+export const getJobs = async (queries?: MicroCMSQueries) => {
+  return await client.get<JobResponse>({ endpoint: "jobs", queries });
+};
+
+// ─── Pages ─────────────────────────────────────────────────────────────────
+// `pages` is an OBJECT-format API in microCMS — a single record, returned
+// flat (no `{ contents: [...] }` wrapper). Holds site-wide content for the
+// Top + About pages of one2026.
+
+export type ServiceGroup = {
+  fieldId: 'service_group';
+  group_title: string;
+  group_items: string; // newline-separated items
+};
+
+export type Page = {
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string;
+  revisedAt: string;
+  // 2026 site fields (used by SvelteKit)
+  hero_copy: string;
+  hero_subtitle: string;
+  about_intro_title: string;
+  about_intro_body: string;
+  about_intro_body_en: string;
+  services_title: string;
+  services_intro: string;
+  service_groups: ServiceGroup[];
+  // Legacy fields kept for old site compatibility — not used here
+  top_tagline?: string;
+  top_jap?: string;
+  top_eng?: string;
+  studio_jap?: string;
+  studio_eng?: string;
+  philosophy_title_eng?: string;
+  philosophy?: string;
+};
+
+/**
+ * Fetch the `pages` object. Returns null on any failure so callers can
+ * gracefully fall back to hardcoded copy without crashing the page.
+ */
+export const getPage = async (): Promise<Page | null> => {
+  try {
+    return await client.get<Page>({ endpoint: 'pages' });
+  } catch (e) {
+    console.error('[getPage] failed:', e);
+    return null;
+  }
+};
