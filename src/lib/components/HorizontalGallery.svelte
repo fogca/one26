@@ -1,44 +1,32 @@
 <!--
   HorizontalGallery.svelte
   ─────────────────────────────────────────────────────────────
-  Lenis-driven horizontal gallery with center-anchored parallax,
-  scale and opacity falloff. Modeled on the gsproductions /
+  Lenis-driven horizontal gallery, modeled on the gsproductions /
   nrby-ss2025 reference.
 
-  How it works
-  - Lenis is initialised in `orientation: 'horizontal'` mode on
-    the wrapper, so wheel/trackpad/touch becomes a horizontal scroll.
-  - On every scroll tick we compute, for each slide:
-      • parallax  = signed distance to viewport center, mapped to ±intensity rem
-      • scale     = viewport-entry progress eased by `pow(t, easingPower)`
-      • opacity   = same easing curve, separate range
-  - Values are written as CSS variables on the slide; CSS reads them
-    on the inner `<img>` (so clickable bounds stay flat).
+  Layout
+  - Slides sit in a flex row with `gap` between them. Each slide
+    width is computed from its image's natural aspect ratio so the
+    pictures all sit at a consistent height.
 
-  Usage
-  ```svelte
-  <HorizontalGallery
-    items={works.map(w => ({ id: w.id, src: w.thumbnail.url, alt: w.title }))}
-    hoverLabel="Discover"
-  />
-  ```
-
-  Props
-  - items            — array of `{ id, src, alt? }`
-  - hoverLabel       — text shown by CustomCursor on hover (default 'Discover')
-  - hrefBuilder      — `(item) => string` to build the anchor href
-  - intensity        — parallax offset in rem (default 50)
-  - scaleMin         — minimum scale at slide edges (default 0.8)
-  - opacityMin       — minimum opacity at slide edges (default 0.3)
-  - easingPower      — pow(t, n) easing strength for entry (default 4)
-  - viewportThreshold — entry calc range as a multiple of viewport (default 1.5)
-  - wheelMultiplier  — Lenis wheel sensitivity (default 1)
-  - gap              — flex gap between slides (default '2rem')
+  Scroll-driven entry animation (clip, NOT scale)
+  - As a slide approaches the centre from the right edge, its visible
+    area widens from a centred horizontal band up to the full slide.
+      • slide centre at right viewport edge → top AND bottom of the
+        slide are each clipped by `entryClip` (e.g. 25 %, leaving the
+        middle 50 % visible — band centred on the slide's vertical
+        midline so the visible area grows OUTWARD from the centre)
+      • slide centre at the viewport centre → clip = 0 (full visible)
+      • slide centre anywhere left of centre → clip = 0
+  - Implemented via `clip-path: inset(...)` on the slide. **The image
+    itself is never scaled or distorted** — only the visible window
+    onto it changes. Aspect ratio is preserved on every frame.
 -->
 
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { browser } from '$app/environment';
+	import { goto } from '$app/navigation';
 
 	type Item = {
 		id: string;
@@ -50,56 +38,66 @@
 		items: Item[];
 		hoverLabel?: string;
 		hrefBuilder?: (item: Item) => string;
-		intensity?: number;
-		scaleMin?: number;
-		opacityMin?: number;
+		/**
+		 * Percent clipped off both the TOP and BOTTOM when a slide first
+		 * enters from the right edge — i.e. the visible band is centred
+		 * on the slide's vertical midline. The image grows outward from
+		 * the centre as the slide moves toward the viewport centre.
+		 *   25 = 25 % top + 25 % bottom hidden → 50 % visible band
+		 *   35 = 35 % each → 30 % visible band
+		 * Relaxes to 0 by the time the slide centre reaches viewport centre.
+		 */
+		entryClip?: number;
 		easingPower?: number;
-		viewportThreshold?: number;
 		wheelMultiplier?: number;
 		gap?: string;
-		slideHeight?: string; // image height for all viewports (default 50vh)
+		slideHeight?: string;
+		/**
+		 * Right-edge padding after the last slide, in CSS units. Default
+		 * matches the track's left padding so the strip feels symmetrical.
+		 * Pass `0` to let the last slide's right edge align with the
+		 * viewport's right edge (useful when paired with `endHref`).
+		 */
+		endPadding?: string;
+		/**
+		 * Optional URL to navigate to once the gallery scrolls all the way
+		 * to its right edge — i.e. the last slide is fully on screen. The
+		 * page lingers for `endDwellMs` so the user actually sees the last
+		 * slide before the navigation fires. Set empty to disable.
+		 */
+		endHref?: string;
+		/** Milliseconds to dwell at the scroll end before navigating. */
+		endDwellMs?: number;
 		/**
 		 * When true, Lenis listens to wheel/touch on the whole window instead
-		 * of just this gallery's footprint. Use this when the page should
-		 * drive the gallery from anywhere, not only when the pointer is over
-		 * the slides. Wheel input from outside and inside the gallery then
-		 * runs through exactly the same code path, so the feel is identical
-		 * across the whole page.
+		 * of just this gallery's footprint.
 		 */
 		globalWheel?: boolean;
 	};
 
-	// Defaults are tuned so multiple slides remain clearly visible across
-	// the viewport. The reference's raw values (50 / 0.8 / 0.3 / 1.5) work
-	// for very wide viewports but cause the right side of the gallery to
-	// fade out too early in normal layouts.
 	let {
 		items,
 		hoverLabel = 'Discover',
-		hrefBuilder = (it: Item) => `/works/${it.id}`,
-		// Parallax magnitude in rem. Also drives the img's overflow buffer
-		// (left/width extra) so transparent edges never appear when scrolling.
-		// Set lower (e.g. 1〜2) for a subtler effect; 0 disables parallax.
-		intensity = 3,
-		// Scale defaults to 1 (no scale) so the layout box never desyncs from
-		// the visual size — keeps the gap between slides constant. Set < 1
-		// only if you want the edge-shrink effect AND can absorb the visual
-		// gap drift it introduces.
-		scaleMin = 1,
-		opacityMin = 0.7,
-		easingPower = 3,
-		viewportThreshold = 1,
+		hrefBuilder = (it: Item) => `/work/${it.id}`,
+		entryClip = 25,
+		// 1 = linear, fully proportional to scroll position. Higher values
+		// (2, 3, …) push most of the clip change into the right edge,
+		// which reads as "stays still then suddenly enters" — not what
+		// the reference does. Stick with 1 unless you specifically want
+		// that snap-on-arrival effect.
+		easingPower = 1,
 		wheelMultiplier = 1,
-		gap = '5px',
+		gap = '10px',
 		slideHeight = '40vh',
+		endPadding = '20px',
+		endHref = '',
+		endDwellMs = 500,
 		globalWheel = false
 	}: Props = $props();
 
 	let wrapperEl: HTMLDivElement | null = $state(null);
 	let trackEl: HTMLDivElement | null = $state(null);
-	let ready = $state(false); // toggles the clipRevealUp50 staggered intro
-	// Hoisted to component scope so the exported forwardScroll() helper
-	// (callable from outside via bind:this) can reach the same instance.
+	let ready = $state(false); // toggles the staggered intro reveal
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	let lenisInstance: any = $state(null);
 
@@ -107,7 +105,7 @@
 		if (!browser || !wrapperEl || !trackEl) return;
 
 		// Trigger the staggered clip reveal on the next frame so the initial
-		// inset(40% 0 40% 0) state has time to paint before transitioning.
+		// inset(100% 0 0 0) state has time to paint before transitioning.
 		requestAnimationFrame(() => {
 			ready = true;
 		});
@@ -117,7 +115,6 @@
 
 		let rafId: number | null = null;
 		let scheduled = false;
-		// Set when globalWheel is on — captured so the cleanup can remove it.
 		let onGlobalWheel: ((e: WheelEvent) => void) | null = null;
 
 		const update = () => {
@@ -132,77 +129,53 @@
 			slides.forEach((slide) => {
 				const r = slide.getBoundingClientRect();
 				const sCenter = r.left + r.width / 2;
-				const sLeft = r.left;
 
-				// only animate slides currently within (or just adjacent to) the viewport
-				if (r.right > 0 && sLeft < cWidth) {
-					// signed distance from container center, normalised to ±1
-					const distNorm = Math.max(
-						-1,
-						Math.min(1, (sCenter - cCenter) / (cWidth / 2 + r.width / 2))
-					);
-					const parallax = -(distNorm * intensity);
+				// Skip slides outside (or just adjacent to) the viewport.
+				if (r.right < 0 || r.left > cWidth) return;
 
-					let scale = 1;
-					let opacity = 1;
-					if (sLeft) {
-						const entry =
-							1 -
-							Math.pow(
-								1 -
-									Math.max(
-										0,
-										Math.min(1, (cWidth - sLeft) / (cWidth * viewportThreshold))
-									),
-								easingPower
-							);
-						scale = scaleMin + entry * (1 - scaleMin);
-						opacity = opacityMin + entry * (1 - opacityMin);
-					}
+				// Distance from the slide centre to the viewport centre,
+				// normalised to ±1 by half-viewport-width.
+				// Right of centre  → positive (entering)
+				// Left of centre   → negative (already entered)
+				const distNorm = Math.max(
+					-1,
+					Math.min(1, (sCenter - cCenter) / (cWidth / 2))
+				);
 
-					// Scale toward the viewport center so the visual gap between
-					// neighbouring slides stays equal to `gap` regardless of scale.
-					// Without this, center-origin scaling shrinks each image toward
-					// its own center → the gap appears wider when scale < 1.
-					const origin =
-						distNorm > 0 ? 'left center' : distNorm < 0 ? 'right center' : 'center center';
+				// Right-side progress: 1 at the right edge, 0 at centre and
+				// everything to the left of centre.
+				const t = Math.max(0, distNorm);
+				const eased = Math.pow(t, easingPower);
+				const clipPct = eased * entryClip;
 
-					// Direct DOM writes are noticeably cheaper than gsap.set when
-					// run for every slide on every scroll frame — GSAP's wrapper
-					// re-parses each property and walks its plugin chain. CSS
-					// custom properties only need setProperty.
-					const s = slide.style;
-					s.setProperty('--slide-scale', String(scale));
-					s.setProperty('--slide-opacity', String(opacity));
-					s.setProperty('--image-x', `${parallax}rem`);
-					s.setProperty('--slide-origin', origin);
-				}
+				// Equal top + bottom inset → the visible band stays vertically
+				// CENTERED and grows outward as the slide approaches centre.
+				// The image inside is unchanged.
+				slide.style.setProperty('--clip-top', `${clipPct}%`);
+				slide.style.setProperty('--clip-bottom', `${clipPct}%`);
 			});
 		};
 
 		const onScroll = () => {
 			if (scheduled) return;
 			scheduled = true;
-			requestAnimationFrame(update);
+			requestAnimationFrame(() => {
+				update();
+				checkEnd();
+			});
 		};
 
 		// Recompute layout after each image loads:
 		//   • slide.width = naturalAspect × slideHeight (px)
-		//   • img.width   = slide.width + 2 × intensity (px)  ← strictly larger
-		//   • img.left    = −intensity (px)                    ← centred overshoot
-		//   • track.paddingRight  → last slide can reach viewport center
-		// All sizing is written directly to inline `style` so CSS calc/var
-		// evaluation timing can't desync img and slide.
+		//   • slide.height = slideHeight (fixed)
+		// Image fills slide (width:100% / height:100%) via static CSS — no
+		// parallax buffer needed (parallax was removed for being too noisy).
 		const slideHeightFraction = parseFloat(slideHeight) / 100;
-		// one2026's base.css sets html { font-size: 62.5% } → 1rem = 10px.
-		// Computing extra in px keeps JS the single source of truth.
-		const extraPx = intensity * 10;
 
 		const recalcLayout = () => {
 			const slides = track.querySelectorAll<HTMLElement>('.slide');
 			if (slides.length === 0) return;
 			const vh = window.innerHeight;
-			const vw = window.innerWidth;
 			const heightPx = vh * slideHeightFraction;
 
 			slides.forEach((slide) => {
@@ -210,15 +183,12 @@
 				if (img && img.naturalWidth && img.naturalHeight) {
 					const w = (img.naturalWidth / img.naturalHeight) * heightPx;
 					slide.style.width = `${w}px`;
-					img.style.width = `${w + extraPx * 2}px`;
-					img.style.left = `${-extraPx}px`;
 				}
 			});
 
-			const last = slides[slides.length - 1];
-			if (last.offsetWidth > 0) {
-				track.style.paddingRight = `${Math.max(0, vw / 2 - last.offsetWidth / 2)}px`;
-			}
+			// Right-edge breathing room after the last slide. Pass `endPadding`
+			// at instantiation; default 20px matches the track's left padding.
+			track.style.paddingRight = endPadding;
 			update();
 		};
 
@@ -226,8 +196,6 @@
 			recalcLayout();
 		};
 
-		// Attach a one-shot load listener to every image so we can re-measure
-		// once the natural dimensions are available.
 		const imgs = Array.from(track.querySelectorAll<HTMLImageElement>('.slide img'));
 		imgs.forEach((img) => {
 			if (img.complete) {
@@ -237,6 +205,30 @@
 			}
 		});
 
+		// End-of-gallery auto-navigation. Once Lenis reaches its scroll
+		// limit (the last slide is fully visible), we wait `endDwellMs`
+		// then navigate. Scrolling back away cancels the timer so the
+		// user can browse without firing the nav.
+		let endTriggered = false;
+		let endTimer: ReturnType<typeof setTimeout> | null = null;
+
+		const checkEnd = () => {
+			if (!endHref || endTriggered || !lenisInstance) return;
+			const limit = lenisInstance.limit ?? 0;
+			const atEnd = limit > 0 && lenisInstance.scroll >= limit - 1;
+			if (atEnd) {
+				if (endTimer === null) {
+					endTimer = setTimeout(() => {
+						endTriggered = true;
+						goto(endHref);
+					}, endDwellMs);
+				}
+			} else if (endTimer !== null) {
+				clearTimeout(endTimer);
+				endTimer = null;
+			}
+		};
+
 		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		import('@studio-freight/lenis').then((mod: any) => {
 			const Lenis = mod.default ?? mod;
@@ -244,13 +236,19 @@
 				wrapper,
 				content: track,
 				orientation: 'horizontal',
-				// 'both' lets the user scroll horizontally with the trackpad/wheel
-				// in EITHER axis — vertical wheel input is converted into
-				// horizontal scroll on this gallery.
 				gestureOrientation: 'both',
 				smoothWheel: true,
+				smoothTouch: true,
 				wheelMultiplier,
-				touchMultiplier: 2
+				touchMultiplier: 2,
+				// lerp lower than the 0.1 default → softer interpolation,
+				// more inertial feel. 0.07 reads as "buttery" without going
+				// so slow that the gallery feels laggy.
+				lerp: 0.07,
+				// Match Lenis's classic smooth-scroll easing curve. The
+				// custom easing is what gives the gallery its drift-out
+				// feeling at the end of a wheel gesture.
+				easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t))
 			});
 
 			lenisInstance.on('scroll', onScroll);
@@ -261,17 +259,9 @@
 			};
 			rafId = requestAnimationFrame(raf);
 
-			// First-frame layout pass
 			update();
 			window.addEventListener('resize', onResize);
 
-			// When globalWheel is on, capture wheel events anywhere on the page
-			// and re-dispatch them onto the gallery wrapper. Lenis already has a
-			// `wheel` listener attached to wrapper — by re-firing the same event
-			// there we go through Lenis's exact internal pipeline (no scrollTo
-			// tween, no second smoothing layer), so wheel from inside vs outside
-			// the gallery feel identical. Skip if the original event already
-			// originated inside the wrapper (Lenis would handle it directly).
 			if (globalWheel) {
 				onGlobalWheel = (e: WheelEvent) => {
 					if (wrapper.contains(e.target as Node)) return;
@@ -289,6 +279,7 @@
 				};
 				window.addEventListener('wheel', onGlobalWheel, { passive: false });
 			}
+
 		});
 
 		return () => {
@@ -297,6 +288,7 @@
 			lenisInstance = null;
 			window.removeEventListener('resize', onResize);
 			if (onGlobalWheel) window.removeEventListener('wheel', onGlobalWheel);
+			if (endTimer !== null) clearTimeout(endTimer);
 		};
 	});
 </script>
@@ -343,51 +335,44 @@
 		/* Without max-content, flex compresses all children to fit the wrapper
 		   width and the gallery never overflows → no scroll, slides overlap. */
 		width: max-content;
-		/* First slide starts 20px in from the wrapper's left edge. */
 		padding-left: 20px;
 		will-change: transform;
 	}
 
 	.slide {
-		--slide-scale: 1;
-		--slide-opacity: 1;
-		--image-x: 0rem;
+		--clip-top: 0%;
+		--clip-bottom: 0%;
 		flex-shrink: 0;
-		/* The slide width is computed in JS from each image's natural aspect
-		   ratio × slideHeight (since the <img> is absolutely positioned, the
-		   slide otherwise has no intrinsic width). */
-		width: var(--slide-w, 0);
+		width: var(--slide-w, 0); /* set by JS in recalcLayout */
 		height: var(--slide-height, 40vh);
 		position: relative;
 		overflow: hidden;
 		text-decoration: none;
 		display: block;
+		/* Scroll-driven entry window. JS updates the two custom properties
+		   per scroll frame — NO CSS transition here, otherwise a 1+s tween
+		   would lag behind every per-frame scroll update. Equal top/bottom
+		   keeps the visible band CENTERED on the slide, so the area grows
+		   outward from the vertical midline. */
+		-webkit-clip-path: inset(var(--clip-top) 0 var(--clip-bottom) 0);
+		clip-path: inset(var(--clip-top) 0 var(--clip-bottom) 0);
 	}
 
 	.slide img {
-		position: absolute;
-		top: 0;
-		height: 100%;
-		/* width and left are written directly to inline style by JS in
-		   recalcLayout() — kept out of CSS so calc/var timing can't make
-		   img and slide resolve to the same width on early frames. */
-		object-fit: cover;
 		display: block;
-		transform: translate3d(var(--image-x), 0, 0) scale(var(--slide-scale));
-		/* Scale toward the side closer to the viewport center so the visible
-		   gap between neighbouring slides stays equal regardless of scale. */
-		transform-origin: var(--slide-origin, center center);
-		opacity: var(--slide-opacity);
-		/* Bottom-up clipReveal: image rises from its bottom edge.
-		   inset(top right bottom left) — top: 100% hides everything except
-		   the bottom edge, then transitions to inset(0) to reveal upward. */
+		width: 100%;
+		height: 100%;
+		object-fit: cover;
+		/* Staggered intro reveal lives here on the <img>, NOT on .slide.
+		   Keeping it on a different element means the intro transition
+		   never fights the scroll-driven clip updates above. */
 		-webkit-clip-path: inset(100% 0 0 0);
 		clip-path: inset(100% 0 0 0);
 		transition:
 			-webkit-clip-path 1.25s cubic-bezier(0.165, 0.84, 0.44, 1),
 			clip-path 1.25s cubic-bezier(0.165, 0.84, 0.44, 1);
 		transition-delay: var(--delay, 0s);
-		will-change: transform, opacity, clip-path;
+		will-change: clip-path;
 	}
 
 	.gallery.ready .slide img {
@@ -400,8 +385,5 @@
 	   would dim the whole slide — pin it to 1 here. */
 	.slide:hover {
 		opacity: 1;
-	}
-	.slide:hover img {
-		opacity: var(--slide-opacity);
 	}
 </style>

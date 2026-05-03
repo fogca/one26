@@ -2,8 +2,8 @@
 	import Logo from '$lib/components/Logo@.svelte';
 
 	const links = [
-		{ href: '/works', text: 'Archives' },
-		{ href: '/office', text: 'About' },
+		{ href: '/work', text: 'Work' },
+		{ href: '/about', text: 'About' },
 		{ href: '/jobs', text: 'Jobs' },
 		{ href: '/contact', text: 'Contact' }
 	];

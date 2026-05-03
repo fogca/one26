@@ -35,8 +35,8 @@
     <div class="opt-row">
       <span class="opt-label">View</span>
       <div class="opt-values">
-        <a href="/works" class="opt-item">Grid</a>
-        <a href="/works/list" class="opt-item active" aria-current="page">List</a>
+        <a href="/work" class="opt-item">Grid</a>
+        <a href="/work/list" class="opt-item active" aria-current="page">List</a>
       </div>
     </div>
 
@@ -45,14 +45,14 @@
       <span class="opt-label">Sort</span>
       <div class="opt-values">
         <a
-          href="/works/list?sort=default"
+          href="/work/list?sort=default"
           class="opt-item"
           class:active={data.sort === 'default'}
         >
           Default
         </a>
         <a
-          href="/works/list?sort=new"
+          href="/work/list?sort=new"
           class="opt-item"
           class:active={data.sort === 'new'}
         >
@@ -64,7 +64,7 @@
 
   <div class="wrapper">
     {#each data.works as work}
-      <a class="container" href="/works/{work.id}">
+      <a class="container" href="/work/{work.id}">
         {#if work.thumbnail?.url}
           <img src={work.thumbnail.url} alt={work.title} loading="lazy" />
         {/if}

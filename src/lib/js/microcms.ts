@@ -12,8 +12,15 @@ export type Work = {
   id: string;
   createdAt: string;
   updatedAt: string;
-  publishedAt: string;
-  revisedAt: string;
+  // null on draft-only records (microCMS returns null when never published).
+  publishedAt: string | null;
+  revisedAt: string | null;
+  // Set when an admin "公開停止" the record. Treated as not-public when present.
+  closedAt?: string | null;
+  // 26 site flag — when true the work is reachable via direct URL only,
+  // hidden from /works grid, /works/list, sitemap and next-project nav.
+  // Optional: schema field may not exist yet; treated as `false` if absent.
+  is_unlisted?: boolean;
   title: string;
   description: string;
   scope: string[];
@@ -36,6 +43,25 @@ export type Work = {
     images?: MicroCMSImage;
   } | MicroCMSImage;  // 配列、オブジェクト、または単一画像の可能性
 };
+
+/**
+ * True iff the work is publicly listable: published, not closed, not unlisted.
+ *
+ * Use this to filter `getList()` results before exposing them on /works,
+ * /works/list, the home gallery, sitemap.xml, and next/prev navigation.
+ *
+ * Direct slug access (`/works/[slug]` via `getDetail`) bypasses this so an
+ * unlisted work is still reachable by URL — that's the design intent for
+ * the limited-share flag.
+ */
+export function isPublicWork(
+  work: Pick<Work, 'publishedAt' | 'closedAt' | 'is_unlisted'>
+): boolean {
+  if (!work.publishedAt) return false; // never published / draft-only
+  if (work.closedAt) return false; // 公開停止
+  if (work.is_unlisted === true) return false; // 26 限定公開
+  return true;
+}
 
 export type WorkResponse = {
   totalCount: number;

@@ -1,5 +1,5 @@
 import type { PageServerLoad } from './$types';
-import { getList } from '$lib/js/microcms';
+import { getList, isPublicWork } from '$lib/js/microcms';
 import { error } from '@sveltejs/kit';
 import type { MicroCMSImage } from 'microcms-js-sdk';
 
@@ -81,13 +81,29 @@ export const load: PageServerLoad = async ({ url }) => {
     const limit = 100; // 全件取得してランダムに並べるため、大きな値を設定
     const offset = (page - 1) * limit;
 
-    // microCMSからworksを取得（thumbnail、repeat、repeatImgを含む）
+    // microCMSからworksを取得（thumbnail、repeat、repeatImgを含む）。
+    // publishedAt / closedAt / is_unlisted を取得してサーバー側でフィルタ。
+    // microCMS の API key で「下書きの取得を許可」が ON の場合、Content
+    // API は draft も返すので、必ずコード側で除外する。
     const response = await getList({
       limit,
       offset,
       orders: '-publishedAt',
-      fields: ['id', 'title', 'thumbnail', 'repeat', 'repeatImg', 'category']
+      fields: [
+        'id',
+        'title',
+        'thumbnail',
+        'repeat',
+        'repeatImg',
+        'category',
+        'publishedAt',
+        'closedAt',
+        'is_unlisted'
+      ]
     });
+
+    // Draft / 公開停止 / 限定公開 を除外。
+    const publicWorks = response.contents.filter(isPublicWork);
 
     // 全ての画像を1つの配列に収集（isThumbnailフラグ付き）
     const allImages: Array<{ 
@@ -99,7 +115,7 @@ export const load: PageServerLoad = async ({ url }) => {
       isThumbnail: boolean;
     }> = [];
     
-    response.contents.forEach(work => {
+    publicWorks.forEach(work => {
       // thumbnailを追加（isThumbnail: true）
       if (work.thumbnail) {
         allImages.push({
@@ -177,17 +193,18 @@ export const load: PageServerLoad = async ({ url }) => {
     // パターンに基づいて固定された順序でシャッフル（thumbnailを上側に多く配置）
     const shuffledImages = shuffleWithPattern(allImages, pattern);
 
-    // 総ページ数を計算
-    const totalPages = Math.ceil(response.totalCount / limit);
+    // 総ページ数を計算（フィルタ後の公開件数で）
+    const filteredCount = publicWorks.length;
+    const totalPages = Math.ceil(filteredCount / limit);
 
     return {
       images: shuffledImages,
-      works: response.contents,
+      works: publicWorks,
       pattern, // 現在のパターンも返す（必要に応じて）
       pagination: {
         currentPage: page,
         totalPages,
-        totalCount: response.totalCount,
+        totalCount: filteredCount,
         limit,
         hasNext: page < totalPages,
         hasPrev: page > 1

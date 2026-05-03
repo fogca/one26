@@ -119,7 +119,7 @@
 
   // プロジェクト詳細ページへ遷移
   function navigateToProject(workId: string) {
-    goto(`/works/${workId}`);
+    goto(`/work/${workId}`);
   }
 
   let resizeTimer: number;
@@ -189,12 +189,12 @@
 
 <main class="works-page">
   <nav class="options_grid_container" lang="en">
-    <!-- View row: Grid / List toggle (Grid is current page, List → /works/list) -->
+    <!-- View row: Grid / List toggle (Grid is current page, List → /work/list) -->
     <div class="opt-row">
       <span class="opt-label">View</span>
       <div class="opt-values">
-        <a href="/works" class="opt-item active" aria-current="page">Grid</a>
-        <a href="/works/list" class="opt-item">List</a>
+        <a href="/work" class="opt-item active" aria-current="page">Grid</a>
+        <a href="/work/list" class="opt-item">List</a>
       </div>
     </div>
 

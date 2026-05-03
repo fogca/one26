@@ -107,7 +107,7 @@
 	     {#key work.id} so this gets fully re-mounted on slug change, refreshing
 	     all content (images, body, etc.) along with this component. -->
 	{#if navigation?.next}
-		<NextProjectScroll href="/works/{navigation.next.id}" />
+		<NextProjectScroll href="/work/{navigation.next.id}" />
 	{/if}
 
 </div>

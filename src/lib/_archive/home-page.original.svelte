@@ -11,28 +11,15 @@
 	let revealStep = $state(0); // 0: hidden, 1: "We bring…", 2: also "Welcome:)", 3: show gallery
 	let works = $derived(data.works || []);
 
-	// === Experiment Variant ============================================
-	// Centered-gallery layout: hero shuffle = 2-line English, gallery is
-	// vertically centered (50vh), Japanese subtitle is rendered separately
-	// at the bottom-left. Original (3-line, gallery-bottom) layout is
-	// preserved at $lib/_archive/home-page.original.svelte.
-	// ===================================================================
-
-	// Hardcoded fallbacks. The English copy is intentionally locked to this
-	// experiment so the CMS's existing 3-line hero_copy is left untouched
-	// (rollback-safe). PC uses 2 lines, mobile uses 3 — different break
-	// positions, so we ship two strings and pick at mount.
-	const HERO_COPY_PC =
-		"We bring an inventive perspective<br>to every project with our ideas and passion.";
-	const HERO_COPY_SP =
+	// Hero copy / Japanese subtitle come from microCMS `pages`. Hardcoded
+	// fallbacks keep the page rendering even if the CMS is unreachable
+	// (server load returns page: null on error).
+	const FALLBACK_HERO_COPY =
 		"We bring an inventive<br>perspective to every project<br>with our ideas and passion.";
 	const FALLBACK_HERO_SUBTITLE =
 		'時代に流されることのない普遍性と、<br class="sp">未来を切り拓く革新性が共存する<br>ヴィジュアルコミュニケーションを、<br class="sp">創造し続けます。';
 
-	// matchMedia keeps `isMobile` in sync with viewport changes (e.g. window
-	// resize, device rotation). Default false for SSR; corrected in onMount.
-	let isMobile = $state(false);
-	let heroText = $derived(isMobile ? HERO_COPY_SP : HERO_COPY_PC);
+	let heroText = $derived(data.page?.hero_copy?.trim() || FALLBACK_HERO_COPY);
 	let heroSubtitle = $derived(data.page?.hero_subtitle?.trim() || FALLBACK_HERO_SUBTITLE);
 
 	// Map microCMS works → HorizontalGallery's item shape.
@@ -45,18 +32,11 @@
 	onMount(() => {
 		if (!browser) return;
 
-		// Resolve the SP / PC hero copy switch as soon as we hit the client.
-		// reveal step 2 (when the hero ShuffleText mounts) doesn't fire for
-		// 2000 ms so isMobile is settled well before then.
-		const mq = window.matchMedia('(max-width: 767px)');
-		isMobile = mq.matches;
-		const onMqChange = (e: MediaQueryListEvent) => {
-			isMobile = e.matches;
-		};
-		mq.addEventListener('change', onMqChange);
-
-		// Toggle a body class while the reveal sequence runs so the global
-		// Header can be hidden via CSS during the entrance.
+		// Toggle a body class while the reveal sequence is running so the
+		// global Header can be hidden via CSS. Otherwise navigating *to*
+		// home from another page leaves the Header faded-in (by the layout's
+		// afterNavigate) for ~300 ms before the white overlay covers it,
+		// reading as a flicker. Cleared once revealStep === 3.
 		document.body.classList.add('reveal-pending');
 
 		const timeoutIds: ReturnType<typeof setTimeout>[] = [];
@@ -81,8 +61,9 @@
 
 		return () => {
 			timeoutIds.forEach(clearTimeout);
+			// Defensive — make sure the class doesn't leak when the user
+			// navigates away mid-reveal.
 			document.body.classList.remove('reveal-pending');
-			mq.removeEventListener('change', onMqChange);
 		};
 	});
 </script>
@@ -106,9 +87,10 @@
 </svelte:head>
 
 <main class="top-page">
-	<!-- Reveal overlay: bg fades at step 3; the English shuffle stays mounted
-	     and visible. After the reveal, overlay z-index drops so it stops
-	     intercepting Header / pointer events. -->
+	<!-- Reveal Animation: bg fades at step 3; final line stays mounted + visible.
+	     After reveal completes, the overlay drops to z-index 1 so it no longer
+	     intercepts the Header (z 100) and the shuffle text behaves like the
+	     global one on other pages (just sits in normal stacking). -->
 	<div class="reveal-overlay" class:revealed={revealStep === 3}>
 		<div class="reveal-overlay-bg" class:hidden={revealStep === 3} aria-hidden="true"></div>
 		{#if revealStep === 1}
@@ -119,35 +101,30 @@
 
 		{#if revealStep === 2 || revealStep === 3}
 			<div class="reveal-text">
-				<!-- subtitle is NOT passed to ShuffleText in this experiment;
-				     the Japanese line is rendered separately at the bottom. -->
-				<ShuffleText text={heroText} />
+				<ShuffleText text={heroText} subtitle={heroSubtitle} />
 			</div>
 		{/if}
 	</div>
 
 	{#if showContent}
-		<!-- "Work Archives →" sits just above the gallery's top edge on the
-		     right. Gallery height = 50vh, centered at 50% → top edge = 25vh. -->
+		<!-- Right-side anchor link to the full Work Archives. Positioned
+		     just above the gallery strip so it lives in dead space without
+		     fighting the hero shuffle. -->
 		<a href="/work" class="archives-link" data-hover="Discover" lang="en">
 			Work Archives →
 		</a>
 
 		<div class="gallery-wrap">
+			<!-- globalWheel: the gallery's Lenis listens to wheel anywhere on the
+			     page so the user can drive horizontal scroll from outside the
+			     gallery footprint. Component defaults (gap=0, Y-only parallax,
+			     no scale/opacity falloff) mirror the gsproductions / nrby ref. -->
 			<HorizontalGallery
 				items={galleryItems}
 				hoverLabel="Discover"
 				globalWheel
-				slideHeight="38vh"
-				entryClip={10}
-				endHref="/work"
-				endDwellMs={150}
 			/>
 		</div>
-
-		<!-- Japanese subtitle, anchored bottom-left, independent of the
-		     ShuffleText component. -->
-		<p class="hero-subtitle-bottom" lang="ja">{@html heroSubtitle}</p>
 	{/if}
 </main>
 
@@ -160,8 +137,10 @@
 	}
 
 	/* ── Reveal Animation overlay ──
-	   Steps 1, 2: overlay covers Header + content (z 9999).
-	   Step 3:    overlay drops to z 1; pointer-events stay none. */
+	   During the reveal (steps 1, 2) the overlay sits at z 9999 to fully cover
+	   the page (Header + content). Once the reveal lands (step 3) we drop the
+	   stacking so the overlay matches the layout of every other page — the
+	   shuffle text is no longer pinned above the Header. */
 	.reveal-overlay {
 		position: fixed;
 		top: 0;
@@ -192,52 +171,46 @@
 		pointer-events: none;
 	}
 
+	/* No font-size / weight here — let the inner ShuffleText (.text-content.h1)
+	   keep the same h1 sizing as the global ShuffleText on other pages. */
 	.reveal-text {
 		position: relative;
 		z-index: 1;
 		color: var(--key);
 	}
 
-	/* ── Centered gallery ──
-	   38vh tall, centred at 55vh (top: 55vh + translateY(-50%)).
-	   Real bounds: 36vh → 74vh. */
+	/* ── Gallery container — anchored to bottom-left (20px / 20px) ── */
 	.gallery-wrap {
 		position: fixed;
 		left: 0;
-		top: 55vh;
-		transform: translateY(-50%);
+		bottom: 20px;
 		width: 100vw;
-		height: 38vh;
+		height: 40vh;
 	}
 
-	/* ── Japanese subtitle, bottom-left ── */
-	.hero-subtitle-bottom {
-		position: fixed;
-		left: var(--padding);
-		bottom: var(--padding);
-		margin: 0;
-		max-width: 36em;
-		font-family: var(--font-jp-main, var(--font-en-main));
-		font-size: 16px;
-		line-height: 1.725;
-		font-weight: var(--font-weight-regular);
-		font-variation-settings: 'wght' var(--font-weight-regular);
-		letter-spacing: 0.025em;
-		color: var(--key);
-		z-index: 50;
-	}
+	/* "Work Archives →" anchor link aligned to the bottom edge of the hero
+	   (shuffle title + Japanese subtitle), positioned on the right.
 
-	/* ── "Work Archives →" anchor link ──
-	   Aligned to the BASELINE of the 2-line English shuffle's last line on
-	   the right. Mathematical bottom (line-height × 2 = 2.2em) lands too
-	   low because line-height includes descender space; 2.0em hits the
-	   actual baseline of line 2, which reads as "right under the shuffle"
-	   when paired with translateY(-50%) for visual centring. */
+	   The ShuffleText is `position: fixed; top: var(--shuffle-height);
+	   left: var(--padding)` (its default mode), so the hero starts at the
+	   shuffle-height offset from the viewport top — NOT at viewport centre.
+
+	   Vertical math:
+	     hero top    = var(--shuffle-height)
+	     heroHeight  = 3 lines × 1.1 × h1-font-size  (shuffle title)
+	                 + 12px                           (subtitle margin-top)
+	                 + N lines × 1.725 × 16px         (subtitle; N varies by viewport)
+	     hero bottom = var(--shuffle-height) + heroHeight
+	   Inline coefficients: 3 × 1.1 = 3.3 ; 2 × 1.725 = 3.45 (desktop) ;
+	                        4 × 1.725 = 6.9 (mobile, because <br class="sp">
+	                        adds two extra row breaks). */
 	.archives-link {
 		position: fixed;
 		right: var(--padding);
 		bottom: auto;
-		top: calc(var(--shuffle-height) + var(--h1-font-size) * 1.8);
+		top: calc(var(--shuffle-height) + var(--h1-font-size) * 3.3 + 12px + 16px * 3.45);
+		/* Lift the link by half its own height so its vertical centre sits
+		   on the calculated hero-bottom line, instead of its top edge. */
 		transform: translateY(-50%);
 		z-index: 50;
 		font-family: var(--font-en-main, 'Helvetica Neue', Arial, sans-serif);
@@ -255,6 +228,13 @@
 		opacity: 0.6;
 	}
 
+	@media (max-width: 767px) {
+		.archives-link {
+			font-size: 18px;
+			top: calc(var(--shuffle-height) + var(--h1-font-size) * 3.3 + 12px + 16px * 6.9);
+		}
+	}
+
 	/* The home reveal text is purely decorative — keep it from intercepting
 	   pointer events so the Header (z-index 100) underneath stays clickable
 	   even after the reveal-overlay (z-index 9999) settles in place. */
@@ -263,28 +243,20 @@
 	}
 
 	@media (max-width: 767px) {
-		/* On mobile keep the English shuffle anchored top-left; same as
-		   every other page's mobile shuffle alignment. */
+		/* On mobile the reveal copy anchors top-left so it matches the x-axis
+		   alignment used on every other page (/office, /jobs, /contact, /works
+		   shuffle text all sit flush at the viewport's left edge on mobile).
+		   The global ShuffleText mobile padding-top: 15vh keeps it clear of
+		   the Header. */
 		.reveal-overlay {
 			align-items: flex-start;
 			justify-content: flex-start;
 		}
 
+		/* Drop the inner reveal-text wrapper's centering so the shuffle child
+		   inherits a 0-left position from the overlay's flex-start. */
 		.reveal-text {
 			width: 100%;
-		}
-
-		.hero-subtitle-bottom {
-			font-size: 13px;
-			line-height: 1.7;
-			max-width: none;
-		}
-
-		/* Hide the desktop "Work Archives →" anchor on mobile — the layout
-		   is too tight, and the same destination is reachable via the
-		   hamburger menu / scroll-end nav. */
-		.archives-link {
-			display: none;
 		}
 	}
 </style>

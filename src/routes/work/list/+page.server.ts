@@ -1,5 +1,5 @@
 import type { PageServerLoad } from './$types';
-import { getList } from '$lib/js/microcms';
+import { getList, isPublicWork } from '$lib/js/microcms';
 import { error } from '@sveltejs/kit';
 
 type SortType = 'default' | 'new';
@@ -11,12 +11,12 @@ export const load: PageServerLoad = async ({ url }) => {
   try {
     const response = await getList({
       limit: 100,
-      fields: ['id', 'title', 'thumbnail', 'category', 'publishedAt'],
+      fields: ['id', 'title', 'thumbnail', 'category', 'publishedAt', 'closedAt', 'is_unlisted'],
       ...(sort === 'new' ? { orders: '-publishedAt' } : {})
     });
 
     return {
-      works: response.contents,
+      works: response.contents.filter(isPublicWork),
       sort
     };
   } catch (err) {

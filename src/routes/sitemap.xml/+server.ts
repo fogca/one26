@@ -11,17 +11,17 @@
  */
 
 import type { RequestHandler } from './$types';
-import { getList } from '$lib/js/microcms';
+import { getList, isPublicWork } from '$lib/js/microcms';
 
 const SITE_ORIGIN = 'https://one.tokyo.jp';
 
-// Static routes the user can reach directly. /works/[slug] entries are
+// Static routes the user can reach directly. /work/[slug] entries are
 // appended below from microCMS.
 const STATIC_ROUTES: Array<{ path: string; changefreq: string; priority: string }> = [
 	{ path: '/', changefreq: 'weekly', priority: '1.0' },
-	{ path: '/works', changefreq: 'weekly', priority: '0.9' },
-	{ path: '/works/list', changefreq: 'weekly', priority: '0.7' },
-	{ path: '/office', changefreq: 'monthly', priority: '0.7' },
+	{ path: '/work', changefreq: 'weekly', priority: '0.9' },
+	{ path: '/work/list', changefreq: 'weekly', priority: '0.7' },
+	{ path: '/about', changefreq: 'monthly', priority: '0.7' },
 	{ path: '/jobs', changefreq: 'weekly', priority: '0.7' },
 	{ path: '/contact', changefreq: 'monthly', priority: '0.6' }
 ];
@@ -33,12 +33,15 @@ export const GET: RequestHandler = async () => {
 	try {
 		const res = await getList({
 			limit: 100,
-			fields: 'id,updatedAt'
+			fields: 'id,updatedAt,publishedAt,closedAt,is_unlisted'
 		});
-		workEntries = (res.contents ?? []).map((w) => ({
-			id: w.id,
-			updatedAt: w.updatedAt
-		}));
+		// draft / closed / unlisted は sitemap に出さない。
+		workEntries = (res.contents ?? [])
+			.filter(isPublicWork)
+			.map((w) => ({
+				id: w.id,
+				updatedAt: w.updatedAt
+			}));
 	} catch {
 		// Fall through with an empty list — the sitemap still ships static
 		// routes so crawlers aren't left with a 500.
@@ -63,7 +66,7 @@ export const GET: RequestHandler = async () => {
 		const lastmod = (w.updatedAt ?? '').slice(0, 10) || today;
 		urls.push(
 			`<url>` +
-				`<loc>${SITE_ORIGIN}/works/${w.id}</loc>` +
+				`<loc>${SITE_ORIGIN}/work/${w.id}</loc>` +
 				`<lastmod>${lastmod}</lastmod>` +
 				`<changefreq>monthly</changefreq>` +
 				`<priority>0.8</priority>` +

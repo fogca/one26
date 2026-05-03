@@ -20,7 +20,7 @@
 	// Nav order for directional page transitions (klsr-style left/right slide).
 	// Pages later in this array slide IN from the left when entered (right-direction motion);
 	// earlier pages slide IN from the right (left-direction motion).
-	const NAV_ORDER = ['/', '/works', '/office', '/jobs', '/contact'];
+	const NAV_ORDER = ['/', '/work', '/about', '/jobs', '/contact'];
 
 	// ── Stock-aligned timing (mirrors Stock/animation/PageTransition.svelte) ──
 	const OUT_DURATION = 1.0;            // s — base duration for shrink + darken
@@ -51,16 +51,16 @@
 		return { x: dir === 'right' ? '-100%' : '100%', y: '0%' };
 	}
 
-	// True when the path is a /works/[slug] detail page (not /works itself
-	// nor /works/list). Used both for "going INTO a slug" (up direction) and
+	// True when the path is a /work/[slug] detail page (not /work itself
+	// nor /work/list). Used both for "going INTO a slug" (up direction) and
 	// "leaving a slug" (also up direction — slug is conceptually a deeper
 	// layer, so escaping it always rises).
 	function isSlugPath(pathname: string | undefined | null): boolean {
 		if (!pathname) return false;
 		return (
-			pathname.startsWith('/works/') &&
-			pathname !== '/works' &&
-			pathname !== '/works/list'
+			pathname.startsWith('/work/') &&
+			pathname !== '/work' &&
+			pathname !== '/work/list'
 		);
 	}
 
@@ -226,6 +226,7 @@
 		const pathname = $page.url.pathname;
 		const newConfig = getPageText(pathname);
 		const showShuffle = showGlobalShuffle(pathname);
+		const isHome = pathname === '/';
 		// Panel exits to the OPPOSITE side of where it entered, so the wipe
 		// continues its motion. Up-direction (slug nav) exits upward.
 		const exit = panelExit(lastDirection);
@@ -240,6 +241,15 @@
 		gsap.set('.darken-overlay', { opacity: 0 });
 		gsap.set('header', { opacity: 0 });
 		gsap.set('.page-content', { opacity: 0 });
+
+		// Going to home: keep the Header hidden through the entire reveal
+		// sequence (≈3.5 s). Adding the class HERE — before the panel
+		// slides off — means the Header never gets a chance to flash
+		// visible while home/+page.svelte's onMount is still spinning up.
+		// The class is removed by home/+page.svelte at revealStep === 3.
+		if (isHome) {
+			document.body.classList.add('reveal-pending');
+		}
 
 		// IMMEDIATELY wipe the previous page's title from the shuffle's active
 		// span so when the panel later slides off, the user doesn't see the
@@ -286,10 +296,13 @@
 				0.15
 			);
 
-			// 2) Header & content fade in AFTER the panel is mostly out
-			//    (shuffle has been running since before the panel started moving)
+			// 2) Content (and on non-home pages, the Header) fade in AFTER
+			//    the panel is mostly out. On home we skip the Header here —
+			//    the reveal-pending class keeps it hidden via CSS until
+			//    home's revealStep 3 timer removes the class.
+			const fadeTargets = isHome ? ['.page-content'] : ['header', '.page-content'];
 			tl.to(
-				['header', '.page-content'],
+				fadeTargets,
 				{
 					opacity: 1,
 					duration: FADE_IN_DURATION,
@@ -301,19 +314,22 @@
 		});
 	});
 
-	// works/[slug] uses its own in-page ShuffleText; hide global one there
+	// /work/[slug] uses its own in-page ShuffleText; hide global one there
 	function showGlobalShuffle(pathname: string): boolean {
 		if (pathname === '/') return false;
 		if (
-			pathname.startsWith('/works/') &&
-			pathname !== '/works' &&
-			pathname !== '/works/list'
+			pathname.startsWith('/work/') &&
+			pathname !== '/work' &&
+			pathname !== '/work/list'
 		)
 			return false;
 		return true;
 	}
 
-	// 現在のページに応じたbodyクラス
+	// 現在のページに応じたbodyクラス。
+	// クラス名 (page-works / page-office / page-works-detail) は CSS との
+	// 互換性を保つため旧名を維持（layout.svelte 内の :global(body.page-jobs)
+	// などのスタイルセレクタを書き換えずに済む）。
 	$effect(() => {
 		const pathname = $page.url.pathname;
 		const body = document.body;
@@ -329,15 +345,15 @@
 
 		if (pathname === '/') {
 			body.classList.add('page-home');
-		} else if (pathname === '/works') {
+		} else if (pathname === '/work') {
 			body.classList.add('page-works');
-		} else if (pathname === '/office') {
+		} else if (pathname === '/about') {
 			body.classList.add('page-office');
 		} else if (pathname === '/jobs') {
 			body.classList.add('page-jobs');
 		} else if (pathname === '/contact') {
 			body.classList.add('page-contact');
-		} else if (pathname.startsWith('/works/')) {
+		} else if (pathname.startsWith('/work/')) {
 			body.classList.add('page-works-detail');
 		}
 	});
@@ -352,11 +368,11 @@
 	} {
 		if (pathname === '/') {
 			return { text: '', enableHover: true, subtitle: '' };
-		} else if (pathname === '/works/list') {
+		} else if (pathname === '/work/list') {
 			return { text: 'Work<br>Archives / List', enableHover: false, subtitle: '' };
-		} else if (pathname === '/works') {
+		} else if (pathname === '/work') {
 			return { text: 'Work<br>Archives', enableHover: false, subtitle: '' };
-		} else if (pathname === '/office') {
+		} else if (pathname === '/about') {
 			return { text: 'About<br>one inc.', enableHover: false, subtitle: '' };
 		} else if (pathname === '/jobs') {
 			return {
@@ -370,7 +386,7 @@
 				enableHover: false,
 				subtitle: ''
 			};
-		} else if (pathname.startsWith('/works/')) {
+		} else if (pathname.startsWith('/work/')) {
 			return { text: '', enableHover: false, subtitle: '' };
 		}
 		return { text: '', enableHover: false, subtitle: '' };
@@ -435,7 +451,7 @@
 
 			<!-- Footer is hidden on Home and on slug pages — slug pages render
 			     their own NextProjectScroll hand-off instead. -->
-			{#if $page.route.id !== '/' && $page.route.id !== '/works/[slug]'}
+			{#if $page.route.id !== '/' && $page.route.id !== '/work/[slug]'}
 				<Footer />
 			{/if}
 		</div>
@@ -464,6 +480,18 @@
 	.transition-bg {
 		background: var(--key, #100088);
 		min-height: 100vh;
+	}
+
+	/* While the home reveal sequence is running, hide the global Header so
+	   it doesn't flicker visible-then-covered when the user lands on home
+	   from another route. The reveal-pending class is added by the layout's
+	   afterNavigate (home destination) AND home/+page.svelte onMount, then
+	   removed when revealStep === 3. GSAP set inline opacity during page
+	   transitions, so !important is needed until the reveal completes. */
+	:global(body.reveal-pending) header {
+		opacity: 0 !important;
+		transition: opacity 0.4s ease;
+		pointer-events: none;
 	}
 
 	/* page-wrapper inherits body's --page-bg so it fully covers transition-bg
