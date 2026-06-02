@@ -152,7 +152,7 @@
 						id="name"
 						type="text"
 						bind:value={name}
-						placeholder="金子　たろう"
+						placeholder="佐藤　たろう"
 						required
 					/>
 				</div>

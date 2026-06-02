@@ -130,7 +130,17 @@
 		<!-- "Work Archives →" sits just above the gallery's top edge on the
 		     right. Gallery height = 50vh, centered at 50% → top edge = 25vh. -->
 		<a href="/work" class="archives-link" data-hover="Discover" lang="en">
-			Work Archives →
+			Work Archives
+			<svg
+				class="archives-arrow"
+				viewBox="0 0 50 93"
+				fill="currentColor"
+				aria-hidden="true"
+			>
+				<path
+					d="M0 7.05L5.82 0C5.82 0 13.5 11.48 24.98 22.96C36.46 34.44 49.54 47.23 49.54 47.23C49.54 47.23 38.83 55.65 26.13 68.35C13.43 81.05 5.66 92.31 5.66 92.31L0.11 84.51L22.93 62.39C32.16 53.16 37.3 46.9 37.3 46.9C37.3 46.9 29.58 36.82 20.63 27.88L0 7.05Z"
+				/>
+			</svg>
 		</a>
 
 		<div class="gallery-wrap">
@@ -138,7 +148,7 @@
 				items={galleryItems}
 				hoverLabel="Discover"
 				globalWheel
-				slideHeight="38vh"
+				slideHeight="35vh"
 				entryClip={10}
 				endHref="/work"
 				endDwellMs={150}
@@ -199,15 +209,15 @@
 	}
 
 	/* ── Centered gallery ──
-	   38vh tall, centred at 55vh (top: 55vh + translateY(-50%)).
-	   Real bounds: 36vh → 74vh. */
+	   35vh tall, centred at 55vh (top: 55vh + translateY(-50%)).
+	   Real bounds: 37.5vh → 72.5vh. */
 	.gallery-wrap {
 		position: fixed;
 		left: 0;
 		top: 55vh;
 		transform: translateY(-50%);
 		width: 100vw;
-		height: 38vh;
+		height: 35vh;
 	}
 
 	/* ── Japanese subtitle, bottom-left ── */
@@ -228,17 +238,15 @@
 	}
 
 	/* ── "Work Archives →" anchor link ──
-	   Aligned to the BASELINE of the 2-line English shuffle's last line on
-	   the right. Mathematical bottom (line-height × 2 = 2.2em) lands too
-	   low because line-height includes descender space; 2.0em hits the
-	   actual baseline of line 2, which reads as "right under the shuffle"
-	   when paired with translateY(-50%) for visual centring. */
+	   Bottom-left, sitting just under the gallery's bottom edge. The gallery
+	   spans 37.5vh → 72.5vh (top 55vh, height 35vh, centred via translateY);
+	   a ~2vh gap below the 72.5vh edge reads as "right under the image". */
 	.archives-link {
 		position: fixed;
-		right: var(--padding);
+		left: var(--padding);
+		right: auto;
 		bottom: auto;
-		top: calc(var(--shuffle-height) + var(--h1-font-size) * 1.8);
-		transform: translateY(-50%);
+		top: 74.5vh;
 		z-index: 50;
 		font-family: var(--font-en-main, 'Helvetica Neue', Arial, sans-serif);
 		font-size: 24px;
@@ -250,6 +258,18 @@
 		border-bottom: 0;
 		padding-bottom: 0;
 		transition: opacity 0.2s ease;
+	}
+	.archives-link {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.25em;
+	}
+	/* Chevron arrow: height matched to the text cap height; width follows the
+	   50:93 viewBox ratio. Inherits the link colour via fill: currentColor. */
+	.archives-arrow {
+		height: 0.7em;
+		width: auto;
+		flex: none;
 	}
 	.archives-link:hover {
 		opacity: 0.6;
