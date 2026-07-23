@@ -414,7 +414,7 @@
 
 <svelte:head>
 	<link rel="icon" href={favicon} />
-	<link rel="stylesheet" href="../css/base.css?var=1.03" />
+	<link rel="stylesheet" href="../css/base.css?var=1.04" />
 	<link rel="stylesheet" href="../css/rendering.css?var=1.00" />
 	<link rel="stylesheet" href="https://use.typekit.net/iqk5bse.css" />
 

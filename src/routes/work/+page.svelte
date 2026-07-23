@@ -30,6 +30,53 @@
   let animated = $state(false);
   let isLoading = $state(true); // 読み込み状態
 
+  // Desktop only: scroll depth drives the column count — 3 cols at the top,
+  // 4 as soon as you scroll, 5 from around the middle. A manual Size click
+  // takes over and stops the scroll driving for the rest of the visit.
+  let scrollDriven = true;
+
+  // Thresholds are ABSOLUTE scroll depth in viewport-heights, not a fraction
+  // of the page: each column switch changes the masonry height, so ratio-
+  // based progress feeds back on itself and cascades through the sizes.
+  // Absolute scrollY doesn't move when the layout reflows. Separate up/down
+  // values (hysteresis) so the grid doesn't oscillate when a switch shortens
+  // the page enough that the browser clamps scrollY back below the trigger.
+  const UP_TO_4 = 0.1; // any real scroll off the top -> 4 cols
+  const UP_TO_5 = 1.8; // around the middle of the page -> 5 cols
+  const DOWN_TO_3 = 0.03; // essentially back at the top -> 3 cols
+  const DOWN_TO_4 = 1.2; // back above 1.2 viewports -> 4 cols
+
+  function desiredSizeFromScroll(): string {
+    const vh = window.innerHeight;
+    const y = window.scrollY;
+    const cur = parseInt(currentGridSize, 10) || 3;
+    if (cur <= 3) {
+      if (y >= UP_TO_5 * vh) return '5';
+      if (y >= UP_TO_4 * vh) return '4';
+      return '3';
+    }
+    if (cur === 4) {
+      if (y >= UP_TO_5 * vh) return '5';
+      if (y < DOWN_TO_3 * vh) return '3';
+      return '4';
+    }
+    if (y < DOWN_TO_3 * vh) return '3';
+    if (y < DOWN_TO_4 * vh) return '4';
+    return '5';
+  }
+
+  function syncGridToScroll() {
+    if (!scrollDriven || window.innerWidth < 768) return;
+    const desired = desiredSizeFromScroll();
+    if (desired !== currentGridSize) changeGridSize(desired);
+  }
+
+  // Manual Size click: freeze the scroll driving, then behave as before.
+  function selectGridSize(newSize: string) {
+    scrollDriven = false;
+    changeGridSize(newSize);
+  }
+
   // 列数を取得（currentGridSize は列数の文字列）
   function getColumnCount(): number {
     const n = parseInt(currentGridSize, 10);
@@ -58,15 +105,16 @@
     
     // Step 2: 各列の高さを追跡
     const columnHeights = Array(columnCount).fill(0);
-    
-    // Step 3: 横並び優先で配置
-    items.forEach((item: Element, index) => {
+
+    // Step 3: 最も短い列に配置（index % columnCount の固定順だと縦長画像が
+    // 偏った列だけ伸びて末尾がバラバラになる。shortest-column 方式なら
+    // 全列がほぼ同じ高さで終わる。空列は左から埋まるので先頭行の並びは同じ）
+    items.forEach((item: Element) => {
       const htmlItem = item as HTMLElement;
-      
-      // 横位置を計算（左から右）
-      const column = index % columnCount;
+
+      const column = columnHeights.indexOf(Math.min(...columnHeights));
       const x = column * (columnWidth + gap);
-      
+
       // 縦位置 = この列の現在の高さ
       const y = columnHeights[column];
       
@@ -113,6 +161,9 @@
       absolute: true, // 絶対配置を考慮
       onComplete: () => {
         animated = false;
+        // A threshold may have been crossed while the Flip was running (the
+        // guard above drops those calls) — settle to the current scroll depth.
+        syncGridToScroll();
       }
     });
   }
@@ -128,7 +179,7 @@
     if (!browser) return;
     
     gsap.registerPlugin(Flip);
-    
+
     // 画像読み込み完了後にレイアウト
     const imageElements = document.querySelectorAll('.grid_gallery_item img');
     let loadedCount = 0;
@@ -137,7 +188,9 @@
       loadedCount++;
       if (loadedCount === imageElements.length) {
         layoutMasonry();
-        
+        // Settle once in case the page was restored mid-scroll.
+        syncGridToScroll();
+
         // レイアウト完了後、少し待ってからフェードイン
         setTimeout(() => {
           isLoading = false;
@@ -163,8 +216,18 @@
 
     window.addEventListener('resize', handleResize);
 
+    // Scroll-driven column count (rAF-throttled)
+    let scrollRaf = 0;
+    const handleScroll = () => {
+      cancelAnimationFrame(scrollRaf);
+      scrollRaf = requestAnimationFrame(syncGridToScroll);
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
     return () => {
       window.removeEventListener('resize', handleResize);
+      window.removeEventListener('scroll', handleScroll);
+      cancelAnimationFrame(scrollRaf);
     };
   });
 </script>
@@ -191,42 +254,42 @@
   <nav class="options_grid_container" lang="en">
     <!-- View row: Grid / List toggle (Grid is current page, List → /work/list) -->
     <div class="opt-row">
-      <span class="opt-label">View</span>
       <div class="opt-values">
         <a href="/work" class="opt-item active" aria-current="page">Grid</a>
         <a href="/work/list" class="opt-item">List</a>
       </div>
     </div>
 
-    <!-- Size row: column count (mobile shows 2-4, desktop 3-5) -->
-    <div class="opt-row">
+    <!-- Size row: column count (mobile shows 2-4, desktop 3-5).
+         Hidden for now via opacity (may come back later) — see .size-row. -->
+    <div class="opt-row size-row">
       <span class="opt-label">Size</span>
       <div class="opt-values configuration_grid_size">
         <button
           class="opt-item col-mobile"
           class:active={currentGridSize === '2'}
-          onclick={() => changeGridSize('2')}
+          onclick={() => selectGridSize('2')}
         >
           2
         </button>
         <button
           class="opt-item"
           class:active={currentGridSize === '3'}
-          onclick={() => changeGridSize('3')}
+          onclick={() => selectGridSize('3')}
         >
           3
         </button>
         <button
           class="opt-item"
           class:active={currentGridSize === '4'}
-          onclick={() => changeGridSize('4')}
+          onclick={() => selectGridSize('4')}
         >
           4
         </button>
         <button
           class="opt-item col-desktop"
           class:active={currentGridSize === '5'}
-          onclick={() => changeGridSize('5')}
+          onclick={() => selectGridSize('5')}
         >
           5
         </button>
@@ -276,9 +339,10 @@
   }
 
   .options_grid_container {
+    /* Sits right under the fixed "Work Archives" title (ShuffleText:
+       top = --shuffle-height, two lines at line-height 1.1). */
     position: fixed;
-    top: auto;
-    bottom: 30px;
+    top: calc(var(--shuffle-height) + var(--h1-font-size) * 2.2 + 32px);
     left: var(--padding);
     z-index: 2;
     display: flex;
@@ -289,13 +353,19 @@
     font-family: var(--font-en-main);
   }
 
+  /* Size row hidden for now — kept in the DOM/markup so it can come back by
+     deleting these two lines. */
+  .opt-row.size-row {
+    opacity: 0;
+    pointer-events: none;
+  }
+
   .opt-row {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
     gap: 24px;
     padding-bottom: 8px;
-    border-bottom: 0.5px solid var(--key);
     font-size: 13px;
   }
 
@@ -311,6 +381,7 @@
   }
 
   .opt-item {
+    position: relative;
     background: transparent;
     color: var(--key);
     padding: 0;
@@ -327,6 +398,19 @@
   .opt-item.active {
     opacity: 1;
     font-weight: var(--font-weight-regular);
+  }
+
+  /* 4px dot to the left of the active item (replaces the "View" label). */
+  .opt-item.active::before {
+    content: '';
+    position: absolute;
+    left: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: currentColor;
   }
 
   .opt-item:not(.active):hover {

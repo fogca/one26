@@ -11,9 +11,9 @@
 	export const ACCENT_COLORS = ['#100088', '#8D2A00'] as const;
 	export type AccentColor = (typeof ACCENT_COLORS)[number];
 
-	// Orange (#8D2A00) is the rare accent — appears roughly 1 in 5 visits
-	// (≈ 20%). Blue (#100088) takes the remaining ≈ 80%.
-	const ORANGE_PROBABILITY = 0.2;
+	// Orange (#8D2A00) is the rare accent — appears roughly 1 in 3 visits
+	// (≈ 33%). Blue (#100088) takes the remaining ≈ 67%.
+	const ORANGE_PROBABILITY = 0.33;
 
 	export function pickRandomAccent(): AccentColor {
 		return Math.random() < ORANGE_PROBABILITY ? '#8D2A00' : '#100088';
@@ -36,8 +36,12 @@
 	onMount(() => {
 		const color = pickRandomAccent();
 
-		// 1. Set CSS variable — all var(--key) consumers update instantly
+		// 1. Set CSS variables — all var(--key) consumers update instantly.
+		//    --key-alt is the opposite accent; the logo flip's back face uses
+		//    it so the rotation always reads as blue ⇄ orange.
+		const alt = ACCENT_COLORS.find((c) => c !== color) ?? ACCENT_COLORS[0];
 		document.documentElement.style.setProperty('--key', color);
+		document.documentElement.style.setProperty('--key-alt', alt);
 
 		// 2. Replace favicon with a dynamically-colored SVG
 		const href = buildFaviconDataUri(color);

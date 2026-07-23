@@ -16,6 +16,9 @@
   --white: #FFFFFF;
   --black: #181818;
   --key: #100088;
+  /* The "other" accent — Color.svelte keeps this in sync as the opposite of
+     --key. Used by the logo flip's back face (blue ⇄ orange rotation). */
+  --key-alt: #8D2A00;
 
   /* Typography - Font families */
   --font-en-main: "range-sans-variable","neue-haas-unica", sans-serif;

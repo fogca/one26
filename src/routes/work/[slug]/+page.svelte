@@ -235,8 +235,6 @@
 	}
 
 	.project-image img {
-		width: auto;
-		max-height: 95vh;
 		margin: 0 0 var(--padding);
 	}
 

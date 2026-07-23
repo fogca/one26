@@ -3,12 +3,7 @@
 
   let { data }: { data: PageData } = $props();
 
-  const formatDate = (value: string) =>
-    new Date(value).toLocaleDateString('en-CA', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit'
-    });
+  const formatYear = (value: string) => String(new Date(value).getFullYear());
 </script>
 
 <svelte:head>
@@ -33,15 +28,15 @@
   <nav class="options_grid_container" lang="en">
     <!-- View row: Grid / List toggle (List active here) -->
     <div class="opt-row">
-      <span class="opt-label">View</span>
       <div class="opt-values">
         <a href="/work" class="opt-item">Grid</a>
         <a href="/work/list" class="opt-item active" aria-current="page">List</a>
       </div>
     </div>
 
-    <!-- Sort row: chronological direction -->
-    <div class="opt-row">
+    <!-- Sort row: chronological direction.
+         Hidden for now via opacity (may come back later) — see .sort-row. -->
+    <div class="opt-row sort-row">
       <span class="opt-label">Sort</span>
       <div class="opt-values">
         <a
@@ -72,7 +67,7 @@
         <div class="box">
           <div>
             <span lang="en">{work.category || 'Project'}</span>
-            <span lang="en">{formatDate(work.publishedAt)}</span>
+            <span lang="en">{formatYear(work.publishedAt)}</span>
           </div>
           <h2 class="h2" lang="en">{work.title}</h2>
           <div></div>
@@ -90,9 +85,10 @@
   }
 
   .options_grid_container {
+    /* Sits right under the fixed "Work Archives / List" title (ShuffleText:
+       top = --shuffle-height, two lines at line-height 1.1). */
     position: fixed;
-    top: auto;
-    bottom: 30px;
+    top: calc(var(--shuffle-height) + var(--h1-font-size) * 2.2 + 32px);
     left: var(--padding);
     z-index: 2;
     display: flex;
@@ -109,7 +105,6 @@
     justify-content: space-between;
     gap: 24px;
     padding-bottom: 8px;
-    border-bottom: 0.5px solid var(--key);
     font-size: 13px;
   }
 
@@ -124,7 +119,15 @@
     gap: 18px;
   }
 
+  /* Sort row hidden for now — kept in the DOM/markup so it can come back by
+     deleting these two lines. */
+  .opt-row.sort-row {
+    opacity: 0;
+    pointer-events: none;
+  }
+
   .opt-item {
+    position: relative;
     background: transparent;
     color: var(--key);
     padding: 0;
@@ -141,6 +144,19 @@
   .opt-item.active {
     opacity: 1;
     font-weight: var(--font-weight-regular);
+  }
+
+  /* 4px dot to the left of the active item (replaces the "View" label). */
+  .opt-item.active::before {
+    content: '';
+    position: absolute;
+    left: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: currentColor;
   }
 
   .opt-item:not(.active):hover {
