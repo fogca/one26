@@ -7,8 +7,9 @@ const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'application/pdf'];
 
 export const POST: RequestHandler = async ({ request }) => {
 	const resendApiKey = env.RESEND_API_KEY;
-	// TODO: switch to the client's address on handover
-	const contactToEmail = 'one@takumiisobe.com';
+	// info@ is the client's mailbox (root MX = lolipop). one@takumiisobe.com
+	// stays on during the handover period — drop it once info@ is confirmed.
+	const contactToEmails = ['info@one.tokyo.jp', 'one@takumiisobe.com'];
 	// one.tokyo.jp is a verified domain on Resend (DKIM/SPF/MX set 2026-07-24)
 	const contactFromEmail = 'one inc. <noreply@one.tokyo.jp>';
 
@@ -104,7 +105,7 @@ export const POST: RequestHandler = async ({ request }) => {
 		const [teamResult, replyResult] = await Promise.allSettled([
 			resend.emails.send({
 				from: contactFromEmail,
-				to: contactToEmail,
+				to: contactToEmails,
 				replyTo: email,
 				subject: `[Contact] ${inquiryType} — ${name}`,
 				text: teamMail,
@@ -112,8 +113,8 @@ export const POST: RequestHandler = async ({ request }) => {
 			}),
 			resend.emails.send({
 				from: contactFromEmail,
-				to: email,                // 問い合わせた本人
-				replyTo: contactToEmail, // 返信は team 宛に
+				to: email,                 // 問い合わせた本人
+				replyTo: contactToEmails, // 返信は team 宛に
 				subject: 'お問い合わせを受け付けました — one inc.',
 				text: autoReply
 				// 添付は付けない（送信者のメール容量を圧迫しない）
