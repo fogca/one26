@@ -7,8 +7,10 @@ const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'application/pdf'];
 
 export const POST: RequestHandler = async ({ request }) => {
 	const resendApiKey = env.RESEND_API_KEY;
+	// TODO: switch to the client's address on handover
 	const contactToEmail = 'one@takumiisobe.com';
-	const contactFromEmail = 'onboarding@resend.dev';
+	// one.tokyo.jp is a verified domain on Resend (DKIM/SPF/MX set 2026-07-24)
+	const contactFromEmail = 'one inc. <noreply@one.tokyo.jp>';
 
 	if (!resendApiKey) {
 		console.error('[contact] missing required env vars');
@@ -101,8 +103,8 @@ export const POST: RequestHandler = async ({ request }) => {
 		// Send both in parallel — auto-reply failure should not block team notification
 		const [teamResult, replyResult] = await Promise.allSettled([
 			resend.emails.send({
-				from: contactFromEmail, // 認証済みドメインのアドレス（例: noreply@one.inc）
-				to: contactToEmail,     // 受信先（例: hello@one.inc）
+				from: contactFromEmail,
+				to: contactToEmail,
 				replyTo: email,
 				subject: `[Contact] ${inquiryType} — ${name}`,
 				text: teamMail,
