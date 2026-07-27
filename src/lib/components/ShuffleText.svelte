@@ -519,7 +519,7 @@
     }
 
     .text-content {
-      font-size: 26.5px;
+      font-size: var(--h1-font-size);
       line-height: 1.1;
       width: 100%;
       /* Drop the desktop's max-content track so the grid doesn't force the

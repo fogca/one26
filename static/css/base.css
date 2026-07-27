@@ -47,7 +47,7 @@
 @media (max-width: 767px) {
   :root {
     --padding: 15px;
-    --h1-font-size: 32px;
+    --h1-font-size: 36px;
     --shuffle-height: 30px;
   }
 }

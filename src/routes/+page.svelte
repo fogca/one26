@@ -300,11 +300,10 @@
 			max-width: none;
 		}
 
-		/* Hide the desktop "Work Archives →" anchor on mobile — the layout
-		   is too tight, and the same destination is reachable via the
-		   hamburger menu / scroll-end nav. */
+		/* Mobile: same "under the gallery" anchor as PC, scaled down. */
 		.archives-link {
-			display: none;
+			font-size: 16px;
+			top: 75vh;
 		}
 	}
 </style>

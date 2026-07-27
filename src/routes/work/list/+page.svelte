@@ -26,11 +26,18 @@
 
 <section class="works-list">
   <nav class="options_grid_container" lang="en">
-    <!-- View row: Grid / List toggle (List active here) -->
+    <!-- View row: single link to the other view (current page not shown) -->
     <div class="opt-row">
       <div class="opt-values">
-        <a href="/work" class="opt-item">Grid</a>
-        <a href="/work/list" class="opt-item active" aria-current="page">List</a>
+        <a href="/work" class="opt-item solo">
+          View as Grid
+          <!-- Same chevron as the home "Work Archives" link, scaled to 13px text -->
+          <svg class="opt-arrow" viewBox="0 0 50 93" fill="currentColor" aria-hidden="true">
+            <path
+              d="M0 7.05L5.82 0C5.82 0 13.5 11.48 24.98 22.96C36.46 34.44 49.54 47.23 49.54 47.23C49.54 47.23 38.83 55.65 26.13 68.35C13.43 81.05 5.66 92.31 5.66 92.31L0.11 84.51L22.93 62.39C32.16 53.16 37.3 46.9 37.3 46.9C37.3 46.9 29.58 36.82 20.63 27.88L0 7.05Z"
+            />
+          </svg>
+        </a>
       </div>
     </div>
 
@@ -88,7 +95,7 @@
     /* Sits right under the fixed "Work Archives / List" title (ShuffleText:
        top = --shuffle-height, two lines at line-height 1.1). */
     position: fixed;
-    top: calc(var(--shuffle-height) + var(--h1-font-size) * 2.2 + 32px);
+    top: calc(var(--shuffle-height) + var(--h1-font-size) * 2.2);
     left: var(--padding);
     z-index: 2;
     display: flex;
@@ -146,7 +153,28 @@
     font-weight: var(--font-weight-regular);
   }
 
-  /* 4px dot to the left of the active item (replaces the "View" label). */
+  /* Solo view-switch link — full strength by default, dims on hover. */
+  .opt-item.solo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    margin-top: 10px;
+    font-size: 15px;
+    opacity: 1;
+  }
+  .opt-item.solo:hover {
+    opacity: 0.6;
+  }
+
+  /* Chevron: height matched to the text cap height; width follows the
+     50:93 viewBox ratio. Inherits the link colour via fill: currentColor. */
+  .opt-arrow {
+    height: 0.85em;
+    width: auto;
+    flex: none;
+  }
+
+  /* 4px dot to the left of the active item (Sort row, currently hidden). */
   .opt-item.active::before {
     content: '';
     position: absolute;
@@ -235,19 +263,22 @@
 
   @media (max-width: 767px) {
     .works-list {
-      padding-top: 90px;
+      /* Nav is absolute (out of flow) — this padding is what actually
+         reserves the list's start position; sized to clear the nav's own
+         top offset + rendered height + a 40px gap above the list. */
+      padding-top: 109px;
       padding-bottom: 40px;
     }
 
-    /* Mobile: pin beside the global ShuffleText. Use absolute (not fixed) so
-       it scrolls with the page; top: -8vh sits the block just above the list,
-       level with the shuffle text. */
+    /* Mobile: the shuffle title is in normal flow here (it scrolls with the
+       page), so anchor the nav absolutely at the top of .works-list — that
+       edge sits right below the title block. Left-aligned like PC. */
     .options_grid_container {
       position: absolute;
-      top: -8vh;
-      right: var(--padding);
+      top: 6px;
+      left: var(--padding);
+      right: auto;
       bottom: auto;
-      left: auto;
       width: 120px;
       gap: 6px;
     }
