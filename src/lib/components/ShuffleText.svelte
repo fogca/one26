@@ -8,6 +8,10 @@
   /** Optional Japanese subtitle rendered directly below the shuffle title. Accepts HTML
    *  (e.g. `<br>`) so callers can hand-break lines. Empty string = no subtitle. */
   export let subtitle = '';
+  /** Mobile-only font-size override (e.g. '26.5px'). Empty = fall back to
+   *  the shared --h1-font-size token (used by every page except Home, which
+   *  keeps its original smaller mobile size). */
+  export let mobileFontSize = '';
 
   let textElement: HTMLElement;
   let shuffleInterval: ReturnType<typeof setInterval>;
@@ -418,6 +422,7 @@
     lang="en"
     style:font-family="var(--heading-font)"
     style:--shuffle-lines={lineCount}
+    style:--shuffle-mobile-fs={mobileFontSize || undefined}
   >
     <span class="ghost" aria-hidden="true">{@html currentTargetText}</span>
     <span class="active" bind:this={textElement}></span>
@@ -519,7 +524,7 @@
     }
 
     .text-content {
-      font-size: var(--h1-font-size);
+      font-size: var(--shuffle-mobile-fs, var(--h1-font-size));
       line-height: 1.1;
       width: 100%;
       /* Drop the desktop's max-content track so the grid doesn't force the

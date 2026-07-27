@@ -113,7 +113,7 @@
 		<div class="reveal-overlay-bg" class:hidden={revealStep === 3} aria-hidden="true"></div>
 		{#if revealStep === 1}
 			<div class="reveal-text">
-				<ShuffleText text="Welcome:)" />
+				<ShuffleText text="Welcome:)" mobileFontSize="26.5px" />
 			</div>
 		{/if}
 
@@ -121,7 +121,7 @@
 			<div class="reveal-text">
 				<!-- subtitle is NOT passed to ShuffleText in this experiment;
 				     the Japanese line is rendered separately at the bottom. -->
-				<ShuffleText text={heroText} />
+				<ShuffleText text={heroText} mobileFontSize="26.5px" />
 			</div>
 		{/if}
 	</div>
